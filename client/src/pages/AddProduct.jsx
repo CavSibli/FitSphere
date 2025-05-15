@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAddProductMutation } from '../app/apiSlice';
+import { useSelector } from 'react-redux';
 import '../styles/AddProduct.css';
 
 const AddProduct = () => {
   const navigate = useNavigate();
+  const [addProduct, { isLoading }] = useAddProductMutation();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -15,7 +25,6 @@ const AddProduct = () => {
     trendy: false
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -27,32 +36,19 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        'http://localhost:5000/api/products',
-        {
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock)
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const productData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock)
+      };
 
-      if (response.data) {
-        navigate('/dashboard-admin');
-      }
+      await addProduct(productData).unwrap();
+      navigate('/dashboard-admin');
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de l\'ajout du produit');
-    } finally {
-      setLoading(false);
+      setError(err.data?.message || 'Erreur lors de l\'ajout du produit');
     }
   };
 
@@ -172,8 +168,8 @@ const AddProduct = () => {
           <button type="button" onClick={() => navigate('/dashboard-admin')} className="cancel-button">
             Annuler
           </button>
-          <button type="submit" className="submit-button" disabled={loading}>
-            {loading ? 'Ajout en cours...' : 'Ajouter le produit'}
+          <button type="submit" className="submit-button" disabled={isLoading}>
+            {isLoading ? 'Ajout en cours...' : 'Ajouter le produit'}
           </button>
         </div>
       </form>

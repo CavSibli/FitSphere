@@ -14,25 +14,35 @@ const auth = async (req, res, next) => {
 
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+    console.log('Token décodé:', decoded);
+
     // Vérifier si l'utilisateur existe toujours
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.userId || decoded.id);
     if (!user) {
+      console.error('Utilisateur non trouvé pour le token:', decoded);
       return res.status(401).json({ message: 'Non autorisé - Utilisateur non trouvé' });
     }
 
+    // S'assurer que l'ID est disponible dans le format attendu
+    user.id = user._id;
+
     // Ajouter l'utilisateur à la requête
     req.user = user;
+    console.log('Utilisateur authentifié:', { id: user.id, role: user.role });
+    
     next();
   } catch (error) {
-    console.error('Erreur d\'authentification:', error);
+    console.error('Erreur d\'authentification complète:', error);
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Non autorisé - Token invalide' });
     }
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Non autorisé - Token expiré' });
     }
-    res.status(500).json({ message: 'Erreur d\'authentification' });
+    res.status(500).json({ 
+      message: 'Erreur d\'authentification',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 

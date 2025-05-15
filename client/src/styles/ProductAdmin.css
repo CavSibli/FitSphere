@@ -175,4 +175,25 @@ th {
   padding: 2rem;
   color: #f44336;
   font-size: 1.2rem;
+}
+
+.success-message {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 

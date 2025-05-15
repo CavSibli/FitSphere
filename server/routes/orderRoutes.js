@@ -3,7 +3,10 @@ const router = express.Router();
 const orderController = require('../controllers/orderController');
 const { auth } = require('../middleware/auth');
 
-// Récupérer les commandes d'un utilisateur
+// Récupérer les commandes de l'utilisateur connecté
+router.get('/user/me', auth, orderController.getUserOrders);
+
+// Récupérer les commandes d'un utilisateur spécifique
 router.get('/user/:userId', auth, orderController.getUserOrders);
 
 // Créer une nouvelle commande

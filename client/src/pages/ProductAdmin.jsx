@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  useGetProductsQuery,
+  useAddProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
+  useUpdateProductTrendyMutation
+} from '../app/apiSlice';
 import '../styles/ProductAdmin.css';
 
 const ProductAdmin = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -20,44 +23,12 @@ const ProductAdmin = () => {
     trendy: false
   });
 
-  useEffect(() => {
-    fetchProducts();
-    if (id) {
-      fetchProductById(id);
-    }
-  }, [id]);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/products');
-      setProducts(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des produits:', error);
-      setError('Erreur lors du chargement des produits');
-      setLoading(false);
-    }
-  };
-
-  const fetchProductById = async (productId) => {
-    try {
-      const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
-      const product = response.data;
-      setEditingProduct(product._id);
-      setFormData({
-        name: product.name,
-        description: product.description,
-        price: product.price.toString(),
-        category: product.category,
-        image: product.image,
-        stock: product.stock.toString(),
-        trendy: product.trendy
-      });
-    } catch (error) {
-      console.error('Erreur lors de la récupération du produit:', error);
-      setError('Erreur lors du chargement du produit');
-    }
-  };
+  // RTK Query hooks
+  const { data: products, isLoading, error } = useGetProductsQuery();
+  const [addProduct] = useAddProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
+  const [deleteProduct] = useDeleteProductMutation();
+  const [updateProductTrendy] = useUpdateProductTrendyMutation();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -68,7 +39,16 @@ const ProductAdmin = () => {
   };
 
   const handleEdit = (product) => {
-    navigate(`/products/edit/${product._id}`);
+    setEditingProduct(product._id);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price.toString(),
+      category: product.category,
+      image: product.image,
+      stock: product.stock.toString(),
+      trendy: product.trendy
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -81,10 +61,11 @@ const ProductAdmin = () => {
       };
 
       if (editingProduct) {
-        await axios.put(`http://localhost:5000/api/products/${editingProduct}`, productData);
-        navigate('/admin');
+        await updateProduct({ id: editingProduct, ...productData }).unwrap();
+        setSuccessMessage('Le produit a été modifié avec succès !');
       } else {
-        await axios.post('http://localhost:5000/api/products', productData);
+        await addProduct(productData).unwrap();
+        setSuccessMessage('Le nouveau produit a été ajouté avec succès !');
       }
 
       setEditingProduct(null);
@@ -97,48 +78,54 @@ const ProductAdmin = () => {
         stock: '',
         trendy: false
       });
-      fetchProducts();
+
+      // Faire disparaître le message après 3 secondes
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du produit:', error);
-      setError('Erreur lors de la sauvegarde du produit');
+      alert('Erreur lors de la sauvegarde du produit');
     }
   };
 
   const handleDelete = async (productId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${productId}`);
-        fetchProducts();
+        await deleteProduct(productId).unwrap();
       } catch (error) {
         console.error('Erreur lors de la suppression du produit:', error);
-        setError('Erreur lors de la suppression du produit');
+        alert('Erreur lors de la suppression du produit');
       }
     }
   };
 
   const handleToggleTrendy = async (productId, currentTrendy) => {
     try {
-      await axios.patch(`http://localhost:5000/api/products/${productId}/trendy`, {
-        trendy: !currentTrendy
-      });
-      fetchProducts();
+      await updateProductTrendy({ id: productId, trendy: !currentTrendy }).unwrap();
     } catch (error) {
       console.error('Erreur lors de la mise à jour du statut trendy:', error);
-      setError('Erreur lors de la mise à jour du statut trendy');
+      alert('Erreur lors de la mise à jour du statut trendy');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="loading">Chargement...</div>;
   }
 
   if (error) {
-    return <div className="error">{error}</div>;
+    return <div className="error">Erreur: {error.message || 'Une erreur est survenue'}</div>;
   }
 
   return (
     <div className="product-admin">
       <h1>Gestion des Produits</h1>
+
+      {successMessage && (
+        <div className="success-message">
+          {successMessage}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="product-form">
         <h2>{editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}</h2>
@@ -182,14 +169,20 @@ const ProductAdmin = () => {
 
         <div className="form-group">
           <label htmlFor="category">Catégorie</label>
-          <input
-            type="text"
+          <select
             id="category"
             name="category"
             value={formData.category}
             onChange={handleInputChange}
             required
-          />
+          >
+            <option value="">Sélectionner une catégorie</option>
+            <option value="Yoga">Yoga</option>
+            <option value="Fitness">Fitness</option>
+            <option value="Musculation">Musculation</option>
+            <option value="Cardio">Cardio</option>
+            <option value="Accessoires">Accessoires</option>
+          </select>
         </div>
 
         <div className="form-group">
@@ -266,41 +259,43 @@ const ProductAdmin = () => {
                 <th>Nom</th>
                 <th>Prix</th>
                 <th>Stock</th>
-                <th>Tendance</th>
+                <th>Catégorie</th>
+                <th>Trendy</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {products?.map(product => (
                 <tr key={product._id}>
                   <td>
-                    <img
-                      src={product.image}
-                      alt={product.name}
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
                       className="product-thumbnail"
                     />
                   </td>
                   <td>{product.name}</td>
-                  <td>{product.price.toFixed(2)} €</td>
+                  <td>{product.price}€</td>
                   <td>{product.stock}</td>
+                  <td>{product.category}</td>
                   <td>
-                    <button
-                      className={`trendy-button ${product.trendy ? 'active' : ''}`}
+                    <button 
                       onClick={() => handleToggleTrendy(product._id, product.trendy)}
+                      className={`trendy-button ${product.trendy ? 'active' : ''}`}
                     >
-                      {product.trendy ? 'Tendance' : 'Normal'}
+                      {product.trendy ? 'Trendy' : 'Non trendy'}
                     </button>
                   </td>
-                  <td>
-                    <button
-                      className="edit-button"
+                  <td className="action-buttons">
+                    <button 
                       onClick={() => handleEdit(product)}
+                      className="edit-button"
                     >
                       Modifier
                     </button>
-                    <button
-                      className="delete-button"
+                    <button 
                       onClick={() => handleDelete(product._id)}
+                      className="delete-button"
                     >
                       Supprimer
                     </button>

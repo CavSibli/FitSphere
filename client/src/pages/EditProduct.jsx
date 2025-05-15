@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useGetProductQuery, useUpdateProductMutation } from '../app/apiSlice';
 
 const EditProduct = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  
+  const { 
+    data: fetchedProduct, 
+    isLoading, 
+    error: fetchError 
+  } = useGetProductQuery(productId);
+
+  const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+
   const [product, setProduct] = useState({
     name: '',
     description: '',
@@ -16,24 +23,20 @@ const EditProduct = () => {
     category: ''
   });
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:5000/api/products/${productId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setProduct(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Erreur lors de la récupération du produit:', error);
-        setError('Erreur lors de la récupération du produit');
-        setLoading(false);
-      }
-    };
+  const [error, setError] = useState('');
 
-    fetchProduct();
-  }, [productId]);
+  useEffect(() => {
+    if (fetchedProduct) {
+      setProduct({
+        name: fetchedProduct.name,
+        description: fetchedProduct.description,
+        price: fetchedProduct.price,
+        stock: fetchedProduct.stock,
+        image: fetchedProduct.image,
+        category: fetchedProduct.category
+      });
+    }
+  }, [fetchedProduct]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,21 +49,36 @@ const EditProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      await axios.put(
-        `http://localhost:5000/api/products/${productId}`,
-        product,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      navigate('/dashboard-admin');
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du produit:', error);
+      const updatedProduct = {
+        ...product,
+        price: parseFloat(product.price),
+        stock: parseInt(product.stock)
+      };
+
+      await updateProduct({ 
+        id: productId, 
+        ...updatedProduct 
+      }).unwrap();
+      
+      navigate('/admin/products');
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du produit:', err);
       setError('Erreur lors de la mise à jour du produit');
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+  }
+
+  if (fetchError) {
+    return (
+      <div className="max-w-2xl mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          Erreur lors de la récupération du produit
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -147,26 +165,28 @@ const EditProduct = () => {
             required
           >
             <option value="">Sélectionner une catégorie</option>
-            <option value="equipment">Équipement</option>
-            <option value="clothing">Vêtements</option>
-            <option value="supplements">Compléments</option>
-            <option value="accessories">Accessoires</option>
+            <option value="Yoga">Yoga</option>
+            <option value="Fitness">Fitness</option>
+            <option value="Musculation">Musculation</option>
+            <option value="Cardio">Cardio</option>
+            <option value="Accessoires">Accessoires</option>
           </select>
         </div>
 
         <div className="flex justify-end space-x-4">
           <button
             type="button"
-            onClick={() => navigate('/dashboard-admin')}
+            onClick={() => navigate('/admin/products')}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
           >
             Annuler
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            disabled={isUpdating}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
           >
-            Enregistrer les modifications
+            {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
       </form>

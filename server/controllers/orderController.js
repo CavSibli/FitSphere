@@ -3,17 +3,43 @@ const Order = require('../models/Order');
 // Récupérer les commandes d'un utilisateur
 exports.getUserOrders = async (req, res) => {
   try {
-    console.log('Récupération des commandes pour l\'utilisateur:', req.params.userId);
+    let userId;
     
-    const orders = await Order.find({ user: req.params.userId })
-      .populate('products.product')
+    // Vérifier si l'utilisateur est authentifié
+    if (!req.user) {
+      return res.status(401).json({ message: 'Utilisateur non authentifié' });
+    }
+
+    // Pour la route /me ou une route spécifique
+    if (req.params.userId === 'me' || !req.params.userId) {
+      userId = req.user._id;
+    } else {
+      userId = req.params.userId;
+    }
+
+    if (!userId) {
+      console.error('ID utilisateur invalide:', { user: req.user, params: req.params });
+      return res.status(400).json({ message: 'ID utilisateur invalide' });
+    }
+
+    console.log('Recherche des commandes pour userId:', userId);
+
+    const orders = await Order.find({ user: userId })
+      .populate({
+        path: 'products.product',
+        select: 'name price image'
+      })
       .sort({ createdAt: -1 });
 
-    console.log(`${orders.length} commandes trouvées`);
+    console.log(`${orders.length} commandes trouvées pour l'utilisateur ${userId}`);
     res.json(orders);
   } catch (error) {
-    console.error('Erreur lors de la récupération des commandes:', error);
-    res.status(500).json({ message: 'Erreur lors de la récupération des commandes' });
+    console.error('Erreur complète:', error);
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des commandes',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 

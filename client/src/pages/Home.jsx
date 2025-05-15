@@ -1,44 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useGetProductsQuery } from '../app/apiSlice';
 import '../styles/Home.css';
 
 const Home = () => {
-  const [trendyProducts, setTrendyProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchTrendyProducts = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/products');
-        const trendyProducts = response.data.filter(product => product.trendy);
-        setTrendyProducts(trendyProducts);
-        setLoading(false);
-      } catch (err) {
-        setError('Erreur lors du chargement des produits tendance');
-        setLoading(false);
-      }
-    };
-
-    fetchTrendyProducts();
-  }, []);
+  const { data: products, isLoading, error } = useGetProductsQuery();
+  
+  const trendyProducts = products?.filter(product => product.trendy) || [];
 
   const addToCart = (product) => {
-    const cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingProduct = cart.find(item => item._id === product._id);
+    try {
+      console.log('Adding product to cart:', product);
+      
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      const existingProduct = cart.find(item => item.product?._id === product._id);
 
-    if (existingProduct) {
-      existingProduct.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1 });
+      if (existingProduct) {
+        existingProduct.quantity += 1;
+      } else {
+        // S'assurer que toutes les propriétés nécessaires sont présentes
+        const cartItem = {
+          product: {
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            image: product.image
+          },
+          quantity: 1
+        };
+
+        console.log('New cart item:', cartItem);
+        cart.push(cartItem);
+      }
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+      console.log('Updated cart:', cart);
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
     }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
   };
 
-  if (loading) return <div className="loading">Chargement des produits...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (isLoading) return <div className="loading">Chargement des produits...</div>;
+  if (error) return <div className="error">Erreur lors du chargement des produits</div>;
 
   return (
     <div className="home-container">

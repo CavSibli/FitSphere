@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useLoginMutation } from '../app/apiSlice';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../features/authSlice';
 import '../styles/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [login, { isLoading }] = useLoginMutation();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,34 +26,36 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     try {
       console.log('Tentative de connexion avec:', { email: formData.email });
       
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
-      console.log('Réponse du serveur:', response.data);
+      const response = await login(formData).unwrap();
+      console.log('Réponse du serveur:', response);
 
       // Sauvegarder le token et les informations utilisateur
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify({
-        _id: response.data._id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role,
+        _id: response._id,
+        username: response.username,
+        email: response.email,
+        role: response.role,
+      }));
+
+      dispatch(setCredentials({ 
+        user: response,
+        token: response.token 
       }));
 
       // Rediriger vers le tableau de bord approprié
-      if (response.data.role === 'admin') {
+      if (response.role === 'admin') {
         navigate('/dashboard-admin');
       } else {
         navigate('/dashboard-user');
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error.response?.data || error);
-      setError(error.response?.data?.message || 'Une erreur est survenue lors de la connexion');
-    } finally {
-      setLoading(false);
+      console.error('Erreur de connexion:', error);
+      setError(error.data?.message || 'Une erreur est survenue lors de la connexion');
     }
   };
 
@@ -83,17 +89,17 @@ const Login = () => {
               placeholder="Votre mot de passe"
             />
           </div>
-          <button type="submit" disabled={loading} className="login-button">
-            {loading ? 'Connexion en cours...' : 'Se connecter'}
+          <button type="submit" disabled={isLoading} className="login-button">
+            {isLoading ? 'Connexion en cours...' : 'Se connecter'}
           </button>
           <div className="register-link">
             <p>Pas encore de compte ?</p>
-            <button
-              onClick={() => navigate('/register')} 
+            <Link 
+              to="/register"
               className="register-button"
             >
               S'inscrire
-            </button>
+            </Link>
           </div>
         </form>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { useCreateGuestOrderMutation, useCreateUserOrderMutation } from '../app/apiSlice';
 import '../styles/Cart.css';
 
 const Cart = () => {
@@ -23,18 +24,49 @@ const Cart = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const navigate = useNavigate();
+  const { isAuthenticated } = useSelector(state => state.auth);
+  const [createGuestOrder] = useCreateGuestOrderMutation();
+  const [createUserOrder] = useCreateUserOrderMutation();
 
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      const parsedCart = JSON.parse(savedCart);
-      setCartItems(parsedCart);
-      calculateTotal(parsedCart);
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        console.log('Cart data from localStorage:', parsedCart);
+        
+        // Vérifier et nettoyer les données invalides
+        const validCartItems = parsedCart.filter(item => 
+          item && 
+          item.product && 
+          item.product._id && 
+          item.product.name && 
+          item.product.image && 
+          item.product.price
+        );
+
+        if (validCartItems.length !== parsedCart.length) {
+          console.log('Some invalid items were removed from cart');
+          localStorage.setItem('cart', JSON.stringify(validCartItems));
+        }
+
+        setCartItems(validCartItems);
+        calculateTotal(validCartItems);
+      } catch (error) {
+        console.error('Error parsing cart data:', error);
+        localStorage.removeItem('cart'); // Nettoyer le localStorage si les données sont corrompues
+        setCartItems([]);
+        setTotal(0);
+      }
     }
   }, []);
 
   const calculateTotal = (items) => {
-    const sum = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const sum = items.reduce((acc, item) => {
+      const itemPrice = item.product?.price || 0;
+      const quantity = item.quantity || 0;
+      return acc + (itemPrice * quantity);
+    }, 0);
     setTotal(sum);
   };
 
@@ -42,7 +74,12 @@ const Cart = () => {
     if (newQuantity < 1) return;
 
     const updatedCart = cartItems.map(item => 
-      item.product._id === productId ? { ...item, quantity: newQuantity } : item
+      item.product._id === productId 
+        ? { 
+            ...item, 
+            quantity: newQuantity,
+          }
+        : item
     );
     
     setCartItems(updatedCart);
@@ -76,79 +113,71 @@ const Cart = () => {
         country: formData.country
       };
 
-      // Formater les données du panier
-      const formattedCartItems = cartItems.map(item => ({
-        product: {
-          _id: item.product._id,
-          name: item.product.name,
-          price: item.price,
-          image: item.product.image
-        },
-        quantity: item.quantity,
-        price: item.price
-      }));
+      if (!isAuthenticated) {
+        setIsGuest(true);
+      }
 
       if (isGuest) {
-        // Commande invité
         const guestOrderData = {
           guestInfo: {
             name: formData.name,
-            email: formData.email
+            email: formData.email,
+            phone: formData.phone
           },
-          products: formattedCartItems,
+          products: cartItems.map(item => ({
+            product: {
+              _id: item.product._id,
+              name: item.product.name,
+              price: item.product.price,
+              image: item.product.image
+            },
+            quantity: item.quantity,
+            price: item.product.price
+          })),
           totalAmount: total,
           shippingAddress,
           status: 'processing',
           paymentMethod: formData.paymentMethod,
-          paymentStatus: 'completed'
+          paymentStatus: 'pending'
         };
 
-        console.log('Données de commande invité:', JSON.stringify(guestOrderData, null, 2));
-
-        const response = await axios.post('http://localhost:5000/api/guest-orders/checkout', guestOrderData);
-        
-        if (response.data.success) {
-          setOrderNumber(response.data.order.orderNumber);
-          // Vider le panier
-          localStorage.removeItem('cart');
-          setCartItems([]);
-          setOrderSuccess(true);
-        }
+        const response = await createGuestOrder(guestOrderData).unwrap();
+        setOrderNumber(response.order.orderNumber);
+        localStorage.removeItem('cart');
+        setCartItems([]);
+        setOrderSuccess(true);
       } else {
-        // Commande utilisateur connecté
         const userData = JSON.parse(localStorage.getItem('user'));
         if (!userData) {
-          alert('Veuillez vous connecter pour passer commande');
           navigate('/login');
           return;
         }
 
         const orderData = {
-          user: userData._id,
-          products: formattedCartItems,
+          userId: userData._id,
+          products: cartItems.map(item => ({
+            product: item.product._id,
+            quantity: item.quantity,
+            price: item.product.price
+          })),
           totalAmount: total,
           shippingAddress,
           paymentMethod: formData.paymentMethod,
           status: 'processing',
-          paymentStatus: 'completed'
+          paymentStatus: 'pending'
         };
 
-        const response = await axios.post('http://localhost:5000/api/orders/checkout', orderData);
-        
-        if (response.data) {
-          // Vider le panier
-          localStorage.removeItem('cart');
-          setCartItems([]);
-          setOrderSuccess(true);
-          // Rediriger vers le dashboard après 3 secondes
-          setTimeout(() => {
-            navigate('/dashboard-user');
-          }, 3000);
-        }
+        console.log('Sending order data:', orderData);
+        await createUserOrder(orderData).unwrap();
+        localStorage.removeItem('cart');
+        setCartItems([]);
+        setOrderSuccess(true);
+        setTimeout(() => {
+          navigate('/dashboard-user');
+        }, 3000);
       }
     } catch (error) {
-      console.error('Erreur détaillée lors de la commande:', error);
-      console.error('Réponse du serveur:', error.response?.data);
+      console.error('Erreur lors de la création de la commande:', error);
       alert('Erreur lors de la création de la commande. Veuillez réessayer.');
     }
   };
@@ -191,71 +220,74 @@ const Cart = () => {
       <h1>Votre Panier</h1>
       <div className="cart-content">
         <div className="cart-items">
-          {cartItems.map((item) => (
-            <div key={item.product._id} className="cart-item">
-              <div className="item-image">
-                <img src={item.product.image} alt={item.product.name} />
+          {cartItems.map((item) => {
+            if (!item?.product) {
+              console.log('Invalid item found:', item);
+              return null;
+            }
+
+            return (
+              <div key={item.product._id} className="cart-item">
+                <div className="item-image">
+                  <img 
+                    src={item.product.image} 
+                    alt={item.product.name}
+                    onError={(e) => {
+                      console.log('Image loading error for product:', item.product);
+                      e.target.src = 'placeholder-image-url';
+                    }}
+                  />
+                </div>
+                <div className="item-details">
+                  <h3>{item.product.name}</h3>
+                  <p className="item-price">{item.product.price} €</p>
+                  <div className="quantity-controls">
+                    <button onClick={() => updateQuantity(item.product._id, item.quantity - 1)}>-</button>
+                    <span>{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.product._id, item.quantity + 1)}>+</button>
+                  </div>
+                  <button onClick={() => removeItem(item.product._id)} className="remove-item">
+                    Supprimer
+                  </button>
+                </div>
               </div>
-              <div className="item-details">
-                <h3>{item.product.name}</h3>
-                <p className="item-price">{item.price.toFixed(2)} €</p>
-              </div>
-              <div className="item-quantity">
-                <button onClick={() => updateQuantity(item.product._id, item.quantity - 1)}>-</button>
-                <span>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.product._id, item.quantity + 1)}>+</button>
-              </div>
-              <div className="item-total">
-                <p>{(item.price * item.quantity).toFixed(2)} €</p>
-              </div>
-              <button 
-                className="remove-item"
-                onClick={() => removeItem(item.product._id)}
-              >
-                Supprimer
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
         <div className="cart-summary">
-          <h2>Récapitulatif</h2>
-          <div className="summary-row">
-            <span>Sous-total</span>
-            <span>{total.toFixed(2)} €</span>
+          <h2>Résumé de la commande</h2>
+          <div className="summary-details">
+            <p>Total : {total.toFixed(2)} €</p>
           </div>
-          <div className="summary-row">
-            <span>Livraison</span>
-            <span>Gratuite</span>
-          </div>
-          <div className="summary-row total">
-            <span>Total</span>
-            <span>{total.toFixed(2)} €</span>
-          </div>
-          {!showCheckoutForm ? (
+          {!showCheckoutForm && (
             <div className="checkout-options">
               <button 
-                className="checkout-button"
                 onClick={() => {
                   setIsGuest(false);
                   setShowCheckoutForm(true);
-                }}
+                }} 
+                className="checkout-button"
               >
                 Commander en tant qu'utilisateur
               </button>
               <button 
-                className="checkout-button guest"
                 onClick={() => {
                   setIsGuest(true);
                   setShowCheckoutForm(true);
-                }}
+                }} 
+                className="checkout-button guest"
               >
                 Commander en tant qu'invité
               </button>
             </div>
-          ) : (
+          )}
+        </div>
+
+        {showCheckoutForm && (
+          <div className="checkout-form-container">
+            <h2>{isGuest ? 'Commander en tant qu\'invité' : 'Commander en tant qu\'utilisateur'}</h2>
             <form onSubmit={handleCheckout} className="checkout-form">
-              <h2>Informations de livraison</h2>
-              
               {isGuest && (
                 <>
                   <div className="form-group">
@@ -294,20 +326,9 @@ const Cart = () => {
                       placeholder="06 12 34 56 78"
                     />
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="company">Entreprise (optionnel)</label>
-                    <input
-                      type="text"
-                      id="company"
-                      name="company"
-                      value={formData.company}
-                      onChange={handleInputChange}
-                      placeholder="Nom de votre entreprise"
-                    />
-                  </div>
                 </>
               )}
-
+              
               <div className="form-group">
                 <label htmlFor="street">Adresse de livraison *</label>
                 <input
@@ -320,7 +341,7 @@ const Cart = () => {
                   placeholder="Numéro et nom de rue"
                 />
               </div>
-
+              
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="city">Ville *</label>
@@ -334,6 +355,7 @@ const Cart = () => {
                     placeholder="Votre ville"
                   />
                 </div>
+                
                 <div className="form-group">
                   <label htmlFor="postalCode">Code postal *</label>
                   <input
@@ -365,18 +387,6 @@ const Cart = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="additionalInfo">Informations supplémentaires (optionnel)</label>
-                <textarea
-                  id="additionalInfo"
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleInputChange}
-                  placeholder="Instructions de livraison, commentaires..."
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group">
                 <label htmlFor="paymentMethod">Méthode de paiement *</label>
                 <select
                   id="paymentMethod"
@@ -390,21 +400,36 @@ const Cart = () => {
                 </select>
               </div>
 
+              <div className="form-group">
+                <label htmlFor="additionalInfo">Instructions de livraison (optionnel)</label>
+                <textarea
+                  id="additionalInfo"
+                  name="additionalInfo"
+                  value={formData.additionalInfo}
+                  onChange={handleInputChange}
+                  placeholder="Instructions spéciales pour la livraison..."
+                  rows="3"
+                />
+              </div>
+
               <div className="form-actions">
                 <button
                   type="button"
+                  onClick={() => {
+                    setShowCheckoutForm(false);
+                    setIsGuest(false);
+                  }}
                   className="cancel-button"
-                  onClick={() => setShowCheckoutForm(false)}
                 >
-                  Annuler
+                  Retour
                 </button>
                 <button type="submit" className="submit-button">
-                  Confirmer la commande
+                  {isGuest ? 'Commander en tant qu\'invité' : 'Confirmer la commande'}
                 </button>
               </div>
             </form>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,74 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useGetUserProfileQuery, useGetUserOrdersQuery } from '../app/apiSlice';
 import '../styles/DashboardUser.css';
 
 const DashboardUser = () => {
   const navigate = useNavigate();
-  const [userOrders, setUserOrders] = useState([]);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  
+  const { 
+    data: user, 
+    isLoading: isLoadingProfile, 
+    error: profileError 
+  } = useGetUserProfileQuery();
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
-
-        const response = await axios.get('http://localhost:5000/api/auth/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        setUser(response.data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Erreur lors du chargement du profil:', err);
-        setError('Erreur lors du chargement du profil');
-        setLoading(false);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          navigate('/login');
-        }
-      }
-    };
-
-    fetchUserProfile();
-  }, [navigate]);
-
-  useEffect(() => {
-    const fetchUserOrders = async () => {
-      if (!user?._id) {
-        console.log('ID utilisateur non disponible');
-        return;
-      }
-
-      try {
-        console.log('Récupération des commandes pour l\'utilisateur:', user._id);
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`http://localhost:5000/api/orders/user/${user._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        console.log('Commandes récupérées:', response.data);
-        setUserOrders(response.data);
-      } catch (error) {
-        console.error('Erreur lors de la récupération des commandes:', error);
-        setError('Erreur lors de la récupération de vos commandes');
-      }
-    };
-
-    if (user) {
-      fetchUserOrders();
-    }
-  }, [user]);
+  const {
+    data: userOrders = [],
+    isLoading: isLoadingOrders,
+    error: ordersError
+  } = useGetUserOrdersQuery();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -98,12 +46,22 @@ const DashboardUser = () => {
     return statusClassMap[status] || '';
   };
 
-  if (loading) {
+  if (isLoadingProfile || isLoadingOrders) {
     return <div className="flex justify-center items-center min-h-screen">Chargement...</div>;
   }
 
-  if (error) {
-    return <div className="text-red-500 text-center">{error}</div>;
+  if (profileError) {
+    if (profileError.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+      return null;
+    }
+    return <div className="text-red-500 text-center">Erreur lors du chargement du profil</div>;
+  }
+
+  if (ordersError) {
+    return <div className="text-red-500 text-center">Erreur lors du chargement des commandes</div>;
   }
 
   return (
@@ -126,7 +84,7 @@ const DashboardUser = () => {
         </div>
       )}
 
-      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-8">
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Commandes récentes</h2>
           {userOrders.length === 0 ? (
@@ -150,7 +108,7 @@ const DashboardUser = () => {
                     <ul>
                       {order.products?.map((item, index) => (
                         <li key={index}>
-                          {item.product?.name || item.name} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
+                          {item.product?.name || 'Produit non disponible'} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
                         </li>
                       ))}
                     </ul>
@@ -159,11 +117,6 @@ const DashboardUser = () => {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Produits favoris</h2>
-          <p className="text-gray-600">Aucun produit favori</p>
         </div>
       </div>
     </div>
