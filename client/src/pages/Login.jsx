@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useLoginMutation } from '../app/apiSlice';
+import { useLoginMutation } from '../app/features/auth/authApiSlice';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '../features/authSlice';
-import '../styles/Login.css';
+import { setCredentials } from '../app/features/auth/authSlice';
+import '../styles/Login.scss';
 
 const Login = () => {
   const navigate = useNavigate();

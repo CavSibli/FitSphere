@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useCreateGuestOrderMutation, useCreateUserOrderMutation } from '../app/apiSlice';
-import '../styles/Cart.css';
+import { useCreateGuestOrderMutation } from '../app/features/orders/guestOrdersApiSlice';
+import { useCreateUserOrderMutation } from '../app/features/orders/userOrdersApiSlice';
+import '../styles/Cart.scss';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);

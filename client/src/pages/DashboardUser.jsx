@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetUserProfileQuery, useGetUserOrdersQuery } from '../app/apiSlice';
-import '../styles/DashboardUser.css';
+import { useGetUserProfileQuery } from '../app/features/auth/authApiSlice';
+import { useGetUserOrdersQuery } from '../app/features/orders/userOrdersApiSlice';
+import '../styles/DashboardUser.scss';
 
 const DashboardUser = () => {
   const navigate = useNavigate();

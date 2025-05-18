@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useGetProductQuery, useUpdateProductMutation } from '../app/apiSlice';
+import { useGetProductQuery, useUpdateProductMutation } from '../app/features/products/productsApiSlice';
 
 const EditProduct = () => {
   const { productId } = useParams();

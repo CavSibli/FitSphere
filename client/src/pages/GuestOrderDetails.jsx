@@ -1,39 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import '../styles/OrderDetails.css';
+import { useGetGuestOrderDetailsQuery } from '../app/features/orders/guestOrdersApiSlice';
+import '../styles/OrderDetails.scss';
 
 const GuestOrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  
+  const {
+    data: order,
+    isLoading,
+    error
+  } = useGetGuestOrderDetailsQuery(id);
 
-  useEffect(() => {
-    const fetchOrderDetails = async () => {
-      try {
-        const response = await axios.get(`http://localhost:5000/api/guest-orders/${id}`);
-        setOrder(response.data);
-      } catch (error) {
-        setError('Erreur lors du chargement des détails de la commande');
-        console.error('Erreur:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrderDetails();
-  }, [id]);
-
-  if (loading) return <div>Chargement...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  if (isLoading) return <div>Chargement...</div>;
+  if (error) return <div className="error-message">
+    {error.status === 404 ? 'Commande non trouvée' : 'Erreur lors du chargement des détails de la commande'}
+  </div>;
   if (!order) return <div>Aucune commande trouvée</div>;
 
   return (
     <div className="order-details">
       <div className="order-header">
-        <h1>Détails de la commande #{order._id}</h1>
+        <h1>Détails de la commande #{order.orderNumber || order._id}</h1>
         <button className="back-button" onClick={() => navigate('/admin')}>
           Retour au dashboard
         </button>
@@ -45,11 +34,11 @@ const GuestOrderDetails = () => {
           <div className="info-grid">
             <div className="info-item">
               <strong>Email:</strong>
-              <span>{order.Email}</span>
+              <span>{order.guestInfo?.email}</span>
             </div>
             <div className="info-item">
               <strong>Nom:</strong>
-              <span>{order.Name}</span>
+              <span>{order.guestInfo?.name}</span>
             </div>
             <div className="info-item">
               <strong>Date de commande:</strong>
@@ -74,14 +63,14 @@ const GuestOrderDetails = () => {
         <div className="order-section">
           <h2>Articles commandés</h2>
           <div className="items-list">
-            {order.items?.map((item, index) => (
+            {order.products?.map((item, index) => (
               <div key={index} className="order-item">
                 <img src={item.product.image} alt={item.product.name} className="item-image" />
                 <div className="item-details">
                   <h3>{item.product.name}</h3>
                   <p>Quantité: {item.quantity}</p>
-                  <p>Prix unitaire: {item.product.price}€</p>
-                  <p>Total: {item.quantity * item.product.price}€</p>
+                  <p>Prix unitaire: {item.price}€</p>
+                  <p>Total: {item.quantity * item.price}€</p>
                 </div>
               </div>
             ))}
@@ -93,7 +82,7 @@ const GuestOrderDetails = () => {
           <div className="order-summary">
             <div className="summary-item">
               <span>Sous-total:</span>
-              <span>{order.total}€</span>
+              <span>{order.totalAmount}€</span>
             </div>
             <div className="summary-item">
               <span>Frais de livraison:</span>
@@ -101,7 +90,7 @@ const GuestOrderDetails = () => {
             </div>
             <div className="summary-item total">
               <span>Total:</span>
-              <span>{order.total}€</span>
+              <span>{order.totalAmount}€</span>
             </div>
           </div>
         </div>

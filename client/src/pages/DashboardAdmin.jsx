@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  useGetDashboardStatsQuery, 
-  useGetAllOrdersQuery,
-  useGetUsersQuery,
-  useUpdateOrderStatusMutation,
-  useUpdateGuestOrderStatusMutation 
-} from '../app/apiSlice';
-import '../styles/DashboardAdmin.css';
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from '../app/features/orders/userOrdersApiSlice';
+import { useGetDashboardStatsQuery } from '../app/features/users/usersApiSlice';
+import { useGetUsersQuery } from '../app/features/users/usersApiSlice';
+import { useUpdateGuestOrderStatusMutation } from '../app/features/orders/guestOrdersApiSlice';
+import '../styles/DashboardAdmin.scss';
 
 const DashboardAdmin = () => {
   const navigate = useNavigate();
@@ -58,7 +55,6 @@ const DashboardAdmin = () => {
 
     const {
       totalOrders = 0,
-      totalRevenue = 0,
       totalUsers = 0,
       totalProducts = 0,
       recentOrders = []
@@ -70,10 +66,6 @@ const DashboardAdmin = () => {
           <div className="stat-card">
             <h3>Commandes Totales</h3>
             <p className="stat-value">{totalOrders}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Chiffre d'Affaires</h3>
-            <p className="stat-value">{Number(totalRevenue).toFixed(2)} €</p>
           </div>
           <div className="stat-card">
             <h3>Utilisateurs</h3>
@@ -90,8 +82,8 @@ const DashboardAdmin = () => {
             {recentOrders.map(order => (
               <div key={order._id} className="order-card">
                 <p>Commande #{order.orderNumber || order._id}</p>
-                <p>Client: {order.user?.name || order.guestInfo?.name || 'Client inconnu'}</p>
-                <p>Total: {Number(order.totalAmount || 0).toFixed(2)}€</p>
+                <p>Client: {order.user?.email || order.guestInfo?.email || 'Client inconnu'}</p>
+                <p>Total: {Number(order.total || 0).toFixed(2)}€</p>
                 <p>Statut: {order.status || 'Non défini'}</p>
               </div>
             ))}

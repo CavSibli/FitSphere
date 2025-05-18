@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAddProductMutation } from '../app/apiSlice';
+import { useAddProductMutation } from '../app/features/products/productsApiSlice';
 import { useSelector } from 'react-redux';
-import '../styles/AddProduct.css';
+import '../styles/AddProduct.scss';
 
 const AddProduct = () => {
   const navigate = useNavigate();

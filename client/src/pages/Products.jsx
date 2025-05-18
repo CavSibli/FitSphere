@@ -1,27 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import '../styles/Products.css';
+import React from 'react';
+import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
+import '../styles/Products.scss';
 
 const Products = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/products');
-      setProducts(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Erreur lors de la récupération des produits:', error);
-      setError('Erreur lors du chargement des produits');
-      setLoading(false);
-    }
-  };
+  const { data: products, isLoading, error } = useGetProductsQuery();
 
   const addToCart = (product) => {
     // Récupérer le panier actuel
@@ -54,19 +36,21 @@ const Products = () => {
     alert('Produit ajouté au panier !');
   };
 
-  if (loading) {
+  if (isLoading) {
     return <div className="loading">Chargement des produits...</div>;
   }
 
   if (error) {
-    return <div className="error">{error}</div>;
+    return <div className="error">
+      {error.status === 404 ? 'Aucun produit trouvé' : 'Erreur lors du chargement des produits'}
+    </div>;
   }
 
   return (
     <div className="products-container">
       <h1>Nos Produits</h1>
       <div className="products-grid">
-        {products.map((product) => (
+        {products?.map((product) => (
           <div key={product._id} className="product-card">
             <div className="product-image">
               <img src={product.image} alt={product.name} />

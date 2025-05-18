@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../styles/Login.css';
+import { useRegisterMutation } from '../app/features/auth/authApiSlice';
+import '../styles/Login.scss';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -12,7 +12,8 @@ const Register = () => {
     role: 'user'
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+
+  const [register, { isLoading }] = useRegisterMutation();
 
   const handleChange = (e) => {
     setFormData({
@@ -24,24 +25,20 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
     // Validation côté client
     if (!formData.username || !formData.email || !formData.password) {
       setError('Tous les champs sont requis');
-      setLoading(false);
       return;
     }
 
     if (formData.username.length < 3) {
       setError('Le nom d\'utilisateur doit contenir au moins 3 caractères');
-      setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères');
-      setLoading(false);
       return;
     }
 
@@ -49,48 +46,29 @@ const Register = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError('Format d\'email invalide');
-      setLoading(false);
       return;
     }
 
     try {
-      console.log('Envoi des données d\'inscription:', {
-        ...formData,
-        password: '***' // Masquer le mot de passe dans les logs
-      });
-
-      const response = await axios.post('http://localhost:5000/api/auth/register', formData, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('Réponse du serveur:', response.data);
+      const response = await register(formData).unwrap();
 
       // Sauvegarder le token et les informations utilisateur
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify({
-        id: response.data._id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role
+        id: response._id,
+        username: response.username,
+        email: response.email,
+        role: response.role
       }));
 
       // Rediriger vers le dashboard approprié en fonction du rôle
-      if (response.data.role === 'admin') {
+      if (response.role === 'admin') {
         navigate('/dashboard-admin');
       } else {
         navigate('/dashboard-user');
       }
     } catch (error) {
-      console.error('Erreur d\'inscription:', error.response?.data || error.message);
-      setError(
-        error.response?.data?.message || 
-        error.response?.data?.error || 
-        'Erreur lors de l\'inscription'
-      );
-    } finally {
-      setLoading(false);
+      setError(error.data?.message || error.data?.error || 'Erreur lors de l\'inscription');
     }
   };
 
@@ -138,8 +116,8 @@ const Register = () => {
               placeholder="Minimum 6 caractères"
             />
           </div>
-          <button type="submit" disabled={loading} className="login-button">
-            {loading ? 'Inscription en cours...' : 'S\'inscrire'}
+          <button type="submit" disabled={isLoading} className="login-button">
+            {isLoading ? 'Inscription en cours...' : 'S\'inscrire'}
           </button>
           <div className="register-link">
             <p>Déjà un compte ?</p>

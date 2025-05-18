@@ -6,8 +6,8 @@ import {
   useUpdateProductMutation,
   useDeleteProductMutation,
   useUpdateProductTrendyMutation
-} from '../app/apiSlice';
-import '../styles/ProductAdmin.css';
+} from '../app/features/products/productsApiSlice';
+import '../styles/ProductAdmin.scss';
 
 const ProductAdmin = () => {
   const navigate = useNavigate();
@@ -119,7 +119,12 @@ const ProductAdmin = () => {
 
   return (
     <div className="product-admin">
-      <h1>Gestion des Produits</h1>
+      <div className="admin-header">
+        <h1>Gestion des Produits</h1>
+        <button onClick={() => navigate('/dashboard-admin')} className="back-button">
+          Retour au dashboard
+        </button>
+      </div>
 
       {successMessage && (
         <div className="success-message">

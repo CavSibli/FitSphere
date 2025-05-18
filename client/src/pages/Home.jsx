@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useGetProductsQuery } from '../app/apiSlice';
-import '../styles/Home.css';
+import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
+import fitnessWorkout from '../assets/images/fitness-workout.jpg';
+import '../styles/Home.scss';
 
 const Home = () => {
   const { data: products, isLoading, error } = useGetProductsQuery();
@@ -45,10 +46,14 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <section className="hero-section">
-        <h1>Bienvenue sur FitSphere</h1>
-        <p>Découvrez nos produits tendance pour votre bien-être</p>
-        <Link to="/products" className="cta-button">Voir tous les produits</Link>
+      <section className="hero-section" style={{ backgroundImage: `url(${fitnessWorkout})` }}>
+        <div className="hero-overlay">
+          <div className="hero-content">
+            <h1>Bienvenue sur FitSphere</h1>
+            <p>Découvrez nos produits tendance pour votre bien-être</p>
+            <Link to="/products" className="cta-button">Voir tous les produits</Link>
+          </div>
+        </div>
       </section>
 
       <section className="trendy-products">
