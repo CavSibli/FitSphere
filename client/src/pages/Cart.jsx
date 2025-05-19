@@ -17,82 +17,55 @@ const Cart = () => {
     city: '',
     postalCode: '',
     country: 'France',
-    paymentMethod: 'credit_card',
+    paymentMethod: 'card',
     phone: '',
     company: '',
-    additionalInfo: ''
+    additionalInfo: '',
+    cardNumber: '',
+    cardExpiry: '',
+    cardCVC: '',
+    cardName: '',
+    paypalEmail: ''
   });
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
   const navigate = useNavigate();
-  const { isAuthenticated } = useSelector(state => state.auth);
-  const [createGuestOrder] = useCreateGuestOrderMutation();
-  const [createUserOrder] = useCreateUserOrderMutation();
+  const { user } = useSelector(state => state.auth);
+  const [createGuestOrder, { isLoading: isGuestOrderLoading }] = useCreateGuestOrderMutation();
+  const [createUserOrder, { isLoading: isUserOrderLoading }] = useCreateUserOrderMutation();
 
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
-        console.log('Cart data from localStorage:', parsedCart);
-        
-        // Vérifier et nettoyer les données invalides
-        const validCartItems = parsedCart.filter(item => 
-          item && 
-          item.product && 
-          item.product._id && 
-          item.product.name && 
-          item.product.image && 
-          item.product.price
-        );
-
-        if (validCartItems.length !== parsedCart.length) {
-          console.log('Some invalid items were removed from cart');
-          localStorage.setItem('cart', JSON.stringify(validCartItems));
-        }
-
-        setCartItems(validCartItems);
-        calculateTotal(validCartItems);
+        setCartItems(parsedCart);
       } catch (error) {
-        console.error('Error parsing cart data:', error);
-        localStorage.removeItem('cart'); // Nettoyer le localStorage si les données sont corrompues
+        console.error('Erreur lors du chargement du panier:', error);
+        localStorage.removeItem('cart');
         setCartItems([]);
-        setTotal(0);
       }
     }
   }, []);
 
-  const calculateTotal = (items) => {
-    const sum = items.reduce((acc, item) => {
-      const itemPrice = item.product?.price || 0;
-      const quantity = item.quantity || 0;
-      return acc + (itemPrice * quantity);
-    }, 0);
-    setTotal(sum);
-  };
+  useEffect(() => {
+    const newTotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    setTotal(newTotal);
+  }, [cartItems]);
 
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity < 1) return;
-
-    const updatedCart = cartItems.map(item => 
-      item.product._id === productId 
-        ? { 
-            ...item, 
-            quantity: newQuantity,
-          }
-        : item
+    const updatedItems = cartItems.map(item =>
+      item.product._id === productId ? { ...item, quantity: newQuantity } : item
     );
-    
-    setCartItems(updatedCart);
-    calculateTotal(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    setCartItems(updatedItems);
+    localStorage.setItem('cart', JSON.stringify(updatedItems));
   };
 
   const removeItem = (productId) => {
-    const updatedCart = cartItems.filter(item => item.product._id !== productId);
-    setCartItems(updatedCart);
-    calculateTotal(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    const updatedItems = cartItems.filter(item => item.product._id !== productId);
+    setCartItems(updatedItems);
+    localStorage.setItem('cart', JSON.stringify(updatedItems));
   };
 
   const handleInputChange = (e) => {
@@ -101,106 +74,188 @@ const Cart = () => {
       ...prev,
       [name]: value
     }));
+    setPaymentError(null);
+  };
+
+  const validateForm = () => {
+    const requiredFields = ['street', 'city', 'postalCode', 'country'];
+    if (isGuest) {
+      requiredFields.push('name', 'email', 'phone');
+    }
+    
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    if (missingFields.length > 0) {
+      setPaymentError(`Veuillez remplir les champs obligatoires: ${missingFields.join(', ')}`);
+      return false;
+    }
+
+    if (formData.email && !formData.email.includes('@')) {
+      setPaymentError('Veuillez entrer une adresse email valide');
+      return false;
+    }
+
+    if (formData.paymentMethod === 'card') {
+      if (!formData.cardNumber || formData.cardNumber.length < 16) {
+        setPaymentError('Veuillez entrer un numéro de carte valide');
+        return false;
+      }
+      if (!formData.cardExpiry || !formData.cardExpiry.match(/^(0[1-9]|1[0-2])\/([0-9]{2})$/)) {
+        setPaymentError('Veuillez entrer une date d\'expiration valide (MM/AA)');
+        return false;
+      }
+      if (!formData.cardCVC || formData.cardCVC.length < 3) {
+        setPaymentError('Veuillez entrer un code CVC valide');
+        return false;
+      }
+      if (!formData.cardName) {
+        setPaymentError('Veuillez entrer le nom sur la carte');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleGuestCheckout = async (e) => {
+    e.preventDefault();
+    try {
+      const orderData = {
+        guestInfo: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone
+        },
+        products: cartItems.map(item => ({
+          product: item.product._id,
+          quantity: item.quantity,
+          price: item.product.price
+        })),
+        totalAmount: total,
+        shippingAddress: {
+          street: formData.street,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country
+        },
+        billingAddress: {
+          street: formData.street,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country
+        },
+        status: 'pending',
+        payment: {
+          method: formData.paymentMethod === 'card' ? 'credit_card' : 'paypal',
+          status: 'pending',
+          amount: total,
+          transactionId: `TXN-${Date.now()}`,
+          paymentDate: new Date(),
+          paymentDetails: formData.paymentMethod === 'paypal' ? {
+            paypalEmail: formData.paypalEmail || formData.email
+          } : {
+            cardLast4: formData.cardNumber.slice(-4),
+            cardName: formData.cardName,
+            cardExpiry: formData.cardExpiry
+          }
+        },
+        additionalInfo: formData.additionalInfo
+      };
+
+      const result = await createGuestOrder(orderData).unwrap();
+      localStorage.removeItem('cart');
+      setCartItems([]);
+      navigate(`/order-confirmation/${result._id}`);
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+      setPaymentError(error.data?.message || 'Erreur lors de la création de la commande. Veuillez réessayer.');
+    }
+  };
+
+  const handleUserCheckout = async (e) => {
+    e.preventDefault();
+    try {
+      if (!user) {
+        setPaymentError('Vous devez être connecté pour passer une commande en tant qu\'utilisateur');
+        return;
+      }
+
+      const orderData = {
+        products: cartItems.map(item => ({
+          product: item.product._id,
+          quantity: item.quantity,
+          price: item.product.price
+        })),
+        totalAmount: total,
+        shippingAddress: {
+          street: formData.street,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country
+        },
+        billingAddress: {
+          street: formData.street,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country
+        },
+        payment: {
+          method: formData.paymentMethod === 'card' ? 'card' : 'paypal',
+          status: 'pending',
+          amount: total,
+          paymentDetails: formData.paymentMethod === 'paypal' ? {
+            paypalEmail: formData.paypalEmail || formData.email
+          } : {
+            cardLast4: formData.cardNumber.slice(-4),
+            cardName: formData.cardName,
+            cardExpiry: formData.cardExpiry
+          },
+          currency: 'EUR',
+          paymentDate: new Date(),
+          transactionId: `txn_${Math.random().toString(36).substr(2, 9)}`
+        },
+        status: 'pending'
+      };
+
+      console.log('Données de commande qui seront envoyées:', orderData);
+      const result = await createUserOrder(orderData).unwrap();
+      localStorage.removeItem('cart');
+      setCartItems([]);
+      navigate(`/order-confirmation/${result._id}`);
+    } catch (error) {
+      console.error('Erreur lors de la création de la commande:', error);
+      setPaymentError(error.data?.message || 'Erreur lors de la création de la commande. Veuillez réessayer.');
+    }
   };
 
   const handleCheckout = async (e) => {
     e.preventDefault();
+    setPaymentError(null);
+    setIsProcessingPayment(true);
     
     try {
-      const shippingAddress = {
-        street: formData.street,
-        city: formData.city,
-        postalCode: formData.postalCode,
-        country: formData.country
-      };
+      if (!validateForm()) {
+        setIsProcessingPayment(false);
+        return;
+      }
 
-      if (!isAuthenticated) {
-        setIsGuest(true);
+      if (!isGuest && !user) {
+        setPaymentError('Vous devez être connecté pour passer une commande en tant qu\'utilisateur');
+        setIsProcessingPayment(false);
+        return;
       }
 
       if (isGuest) {
-        const guestOrderData = {
-          guestInfo: {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone
-          },
-          products: cartItems.map(item => ({
-            product: {
-              _id: item.product._id,
-              name: item.product.name,
-              price: item.product.price,
-              image: item.product.image
-            },
-            quantity: item.quantity,
-            price: item.product.price
-          })),
-          totalAmount: total,
-          shippingAddress,
-          status: 'processing',
-          paymentMethod: formData.paymentMethod,
-          paymentStatus: 'pending'
-        };
-
-        const response = await createGuestOrder(guestOrderData).unwrap();
-        setOrderNumber(response.order.orderNumber);
-        localStorage.removeItem('cart');
-        setCartItems([]);
-        setOrderSuccess(true);
+        await handleGuestCheckout(e);
       } else {
-        const userData = JSON.parse(localStorage.getItem('user'));
-        if (!userData) {
-          navigate('/login');
-          return;
-        }
-
-        const orderData = {
-          userId: userData._id,
-          products: cartItems.map(item => ({
-            product: item.product._id,
-            quantity: item.quantity,
-            price: item.product.price
-          })),
-          totalAmount: total,
-          shippingAddress,
-          paymentMethod: formData.paymentMethod,
-          status: 'processing',
-          paymentStatus: 'pending'
-        };
-
-        console.log('Sending order data:', orderData);
-        await createUserOrder(orderData).unwrap();
-        localStorage.removeItem('cart');
-        setCartItems([]);
-        setOrderSuccess(true);
-        setTimeout(() => {
-          navigate('/dashboard-user');
-        }, 3000);
+        await handleUserCheckout(e);
       }
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error);
-      alert('Erreur lors de la création de la commande. Veuillez réessayer.');
+      setPaymentError(error.data?.message || 'Erreur lors du traitement du paiement');
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
-
-  if (orderSuccess) {
-    return (
-      <div className="cart-container">
-        <div className="order-success">
-          <h1>Commande confirmée !</h1>
-          {isGuest ? (
-            <>
-              <p>Merci pour votre commande.</p>
-              <p>Votre numéro de commande est : {orderNumber}</p>
-              <p>Un email de confirmation a été envoyé à {formData.email}</p>
-            </>
-          ) : (
-            <p>Merci pour votre commande. Vous allez être redirigé vers votre espace personnel.</p>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   if (cartItems.length === 0) {
     return (
@@ -263,15 +318,24 @@ const Cart = () => {
           </div>
           {!showCheckoutForm && (
             <div className="checkout-options">
-              <button 
-                onClick={() => {
-                  setIsGuest(false);
-                  setShowCheckoutForm(true);
-                }} 
-                className="checkout-button"
-              >
-                Commander en tant qu'utilisateur
-              </button>
+              {user ? (
+                <button 
+                  onClick={() => {
+                    setIsGuest(false);
+                    setShowCheckoutForm(true);
+                  }} 
+                  className="checkout-button"
+                >
+                  Commander en tant qu'utilisateur
+                </button>
+              ) : (
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="checkout-button"
+                >
+                  Se connecter pour commander
+                </button>
+              )}
               <button 
                 onClick={() => {
                   setIsGuest(true);
@@ -288,6 +352,11 @@ const Cart = () => {
         {showCheckoutForm && (
           <div className="checkout-form-container">
             <h2>{isGuest ? 'Commander en tant qu\'invité' : 'Commander en tant qu\'utilisateur'}</h2>
+            {paymentError && (
+              <div className="error-message">
+                {paymentError}
+              </div>
+            )}
             <form onSubmit={handleCheckout} className="checkout-form">
               {isGuest && (
                 <>
@@ -387,18 +456,69 @@ const Cart = () => {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="paymentMethod">Méthode de paiement *</label>
+              <div className="payment-section">
+                <h3>Méthode de paiement</h3>
                 <select
-                  id="paymentMethod"
                   name="paymentMethod"
                   value={formData.paymentMethod}
                   onChange={handleInputChange}
                   required
                 >
-                  <option value="credit_card">Carte de crédit</option>
+                  <option value="card">Carte bancaire</option>
                   <option value="paypal">PayPal</option>
                 </select>
+
+                {formData.paymentMethod === 'card' && (
+                  <div className="card-details">
+                    <input
+                      type="text"
+                      name="cardName"
+                      placeholder="Nom sur la carte"
+                      value={formData.cardName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="cardNumber"
+                      placeholder="Numéro de carte"
+                      value={formData.cardNumber}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <div className="card-row">
+                      <input
+                        type="text"
+                        name="cardExpiry"
+                        placeholder="MM/AA"
+                        value={formData.cardExpiry}
+                        onChange={handleInputChange}
+                        required
+                      />
+                      <input
+                        type="text"
+                        name="cardCVC"
+                        placeholder="CVC"
+                        value={formData.cardCVC}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {formData.paymentMethod === 'paypal' && (
+                  <div className="paypal-details">
+                    <input
+                      type="email"
+                      name="paypalEmail"
+                      placeholder="Email PayPal"
+                      value={formData.paypalEmail}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -424,8 +544,12 @@ const Cart = () => {
                 >
                   Retour
                 </button>
-                <button type="submit" className="submit-button">
-                  {isGuest ? 'Commander en tant qu\'invité' : 'Confirmer la commande'}
+                <button 
+                  type="submit" 
+                  className="submit-button"
+                  disabled={isProcessingPayment || isGuestOrderLoading || isUserOrderLoading}
+                >
+                  {isProcessingPayment ? 'Traitement en cours...' : 'Payer et commander'}
                 </button>
               </div>
             </form>

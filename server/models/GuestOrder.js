@@ -13,22 +13,9 @@ const guestOrderSchema = new mongoose.Schema({
   },
   products: [{
     product: {
-      _id: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true
-      },
-      name: {
-        type: String,
-        required: true
-      },
-      price: {
-        type: Number,
-        required: true
-      },
-      image: {
-        type: String,
-        required: true
-      }
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
     },
     quantity: {
       type: Number,
@@ -62,28 +49,85 @@ const guestOrderSchema = new mongoose.Schema({
       required: true
     }
   },
+  billingAddress: {
+    street: {
+      type: String,
+      required: true
+    },
+    city: {
+      type: String,
+      required: true
+    },
+    postalCode: {
+      type: String,
+      required: true
+    },
+    country: {
+      type: String,
+      required: true
+    }
+  },
   status: {
     type: String,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
-  paymentMethod: {
-    type: String,
-    enum: ['credit_card', 'paypal'],
-    required: true
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'completed', 'failed', 'refunded'],
-    default: 'pending'
+  payment: {
+    method: {
+      type: String,
+      required: true,
+      enum: ['credit_card', 'paypal']
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ['pending', 'completed', 'failed', 'refunded']
+    },
+    amount: {
+      type: Number,
+      required: true
+    },
+    transactionId: {
+      type: String
+    },
+    paymentDate: {
+      type: Date
+    },
+    paymentDetails: {
+      type: Map,
+      of: mongoose.Schema.Types.Mixed
+    }
   },
   orderNumber: {
     type: String,
-    required: true,
     unique: true
   }
 }, {
   timestamps: true
+});
+
+// Générer un numéro de commande unique avant la sauvegarde
+guestOrderSchema.pre('save', async function(next) {
+  if (!this.orderNumber) {
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    // Trouver le dernier numéro de commande du jour
+    const lastOrder = await this.constructor.findOne({
+      orderNumber: new RegExp(`^G${year}${month}${day}`)
+    }).sort({ orderNumber: -1 });
+
+    let sequence = '0001';
+    if (lastOrder) {
+      const lastSequence = parseInt(lastOrder.orderNumber.slice(-4));
+      sequence = (lastSequence + 1).toString().padStart(4, '0');
+    }
+
+    this.orderNumber = `G${year}${month}${day}${sequence}`;
+  }
+  next();
 });
 
 module.exports = mongoose.model('GuestOrder', guestOrderSchema); 

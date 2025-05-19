@@ -1,1 +1,195 @@
-// Styles pour la page ProductAdmin 
+@use "./_variables" as *;
+@use "./mixins" as *;
+
+.product-admin {
+  padding: $spacing-lg 0;
+  @include container;
+  
+
+  .admin-header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+
+    h1 {
+      font-size: $font-size-xl;
+      font-weight: bold;
+      color: $text-color;
+    }
+
+    .back-button {
+      @include button-primary;
+      padding: $spacing-sm $spacing-md;
+      border-radius: $border-radius;
+    }
+  }
+
+  .success-message {
+    background-color: color.adjust($primary-color, $lightness: 40%);
+    color: $text-color;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $border-radius;
+    margin-bottom: $spacing-md;
+  }
+
+  .product-form {
+    background-color: $background-color;
+    padding: $spacing-md;
+    border-radius: $border-radius;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: $spacing-lg;
+
+    h2 {
+      font-size: $font-size-lg;
+      margin-bottom: $spacing-md;
+      color: $text-color;
+    }
+
+    .form-group {
+      margin-bottom: $spacing-md;
+
+      label {
+        display: block;
+        margin-bottom: $spacing-xs;
+        font-weight: bold;
+        color: $text-color;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: $spacing-sm;
+        border: 1px solid $secondary-color;
+        border-radius: $border-radius;
+        font-size: $font-size-md;
+        background-color: white;
+        color: $text-color;
+      }
+
+      &.checkbox {
+        display: flex;
+        align-items: center;
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: $spacing-xs;
+          font-weight: normal;
+        }
+      }
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: $spacing-sm;
+
+      .save-button {
+        @include button-primary;
+        padding: $spacing-sm $spacing-md;
+        border-radius: $border-radius;
+      }
+
+      .cancel-button {
+        @include button-base;
+        background-color: color.adjust($secondary-color, $lightness: 20%);
+        color: white;
+        padding: $spacing-sm $spacing-md;
+        border-radius: $border-radius;
+
+        &:hover {
+          background-color: color.adjust($secondary-color, $lightness: 10%);
+        }
+      }
+    }
+  }
+
+  .products-list {
+    h2 {
+      font-size: $font-size-lg;
+      margin-bottom: $spacing-md;
+      color: $text-color;
+    }
+
+    .table-container {
+      overflow-x: auto;
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+          padding: $spacing-sm;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+          font-size: $font-size-sm;
+        }
+
+        th {
+          background-color: $secondary-color;
+          color: white;
+        }
+
+        .product-thumbnail {
+          width: 50px;
+          height: 50px;
+          object-fit: cover;
+          border-radius: $border-radius;
+        }
+
+        .trendy-button {
+          @include button-base;
+          padding: $spacing-xs $spacing-sm;
+          border-radius: $border-radius;
+          font-size: $font-size-sm;
+          background-color: color.adjust($secondary-color, $lightness: 20%);
+          color: white;
+
+          &.active {
+            background-color: $primary-color;
+          }
+
+          &:hover {
+            background-color: color.adjust($secondary-color, $lightness: 10%);
+          }
+        }
+
+        .action-buttons {
+          display: flex;
+          gap: $spacing-xs;
+
+          .edit-button {
+            @include button-primary;
+            padding: $spacing-xs $spacing-sm;
+            border-radius: $border-radius;
+            font-size: $font-size-sm;
+          }
+
+          .delete-button {
+            @include button-base;
+            background-color: color.adjust($secondary-color, $lightness: 20%);
+            color: white;
+            padding: $spacing-xs $spacing-sm;
+            border-radius: $border-radius;
+            font-size: $font-size-sm;
+
+            &:hover {
+              background-color: color.adjust($secondary-color, $lightness: 10%);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .loading,
+  .error {
+    text-align: center;
+    font-size: $font-size-md;
+    color: $text-color;
+    margin-top: $spacing-lg;
+  }
+}
+

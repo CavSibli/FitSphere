@@ -49,9 +49,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="app">
-          <header>
             <Navbar />
-          </header>
           <main className="main-content">
             <Routes>
               {/* Routes publiques */}
@@ -61,6 +59,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/guest-orders/:id" element={<GuestOrderDetails />} />
+              <Route path="/order-confirmation/:id" element={<GuestOrderDetails />} />
 
               {/* Routes protégées - User */}
               <Route 

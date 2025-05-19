@@ -33,7 +33,7 @@
     }
 
     a {
-      color: inherit;
+      color: white;
       text-decoration: none;
       display: flex;
       align-items: center;
@@ -81,7 +81,7 @@
       display: block;
       width: 28px;
       height: 3px;
-      background-color: $text-color;
+      background-color: white;
       margin: 5px 0;
       border-radius: 3px;
       transition: all 0.3s ease;
@@ -143,7 +143,7 @@
     .navbar-item {
       font-size: $font-size-md;
       padding: $spacing-md 0;
-      color: $text-color;
+      color: white;
       text-decoration: none;
       width: 100%;
       text-align: center;
@@ -178,7 +178,7 @@
 
       &.profile-link {
         font-weight: 600;
-        background: linear-gradient(45deg, $primary-color, darken($primary-color, 10%));
+        background: linear-gradient(45deg, $primary-color, color.scale($primary-color, $lightness: -10%));
         color: white;
         padding: $spacing-sm $spacing-md;
         border-radius: 20px;

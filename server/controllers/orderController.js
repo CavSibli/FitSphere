@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
 // Récupérer les commandes d'un utilisateur
 exports.getUserOrders = async (req, res) => {
@@ -43,27 +44,92 @@ exports.getUserOrders = async (req, res) => {
   }
 };
 
+// Fonction utilitaire pour générer un ID de transaction
+function generateTransactionId() {
+  return 'txn_' + Math.random().toString(36).substr(2, 9);
+}
+
 // Créer une nouvelle commande
 exports.createOrder = async (req, res) => {
   try {
-    const { products, totalAmount, shippingAddress } = req.body;
-    const userId = req.user.id;
+    const { 
+      products, 
+      totalAmount, 
+      shippingAddress, 
+      billingAddress,
+      paymentMethod,
+      paymentDetails 
+    } = req.body;
+    
+    console.log('Données reçues:', {
+      products,
+      totalAmount,
+      shippingAddress,
+      billingAddress,
+      paymentMethod,
+      paymentDetails
+    });
+
+    const userId = req.user._id;
+    console.log('User ID:', userId);
+
+    // Vérifier que tous les produits existent
+    for (const item of products) {
+      console.log('Vérification du produit:', item);
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({ message: `Produit non trouvé: ${item.product}` });
+      }
+      item.price = product.price;
+    }
+
+    // Vérifier la méthode de paiement
+    if (!['card', 'paypal'].includes(paymentMethod)) {
+      return res.status(400).json({ message: 'Méthode de paiement invalide' });
+    }
+
+    // Créer l'objet de paiement
+    const payment = {
+      method: paymentMethod,
+      status: 'pending',
+      amount: totalAmount,
+      paymentDetails: paymentDetails,
+      transactionId: generateTransactionId(),
+      paymentDate: new Date()
+    };
+
+    console.log('Objet payment créé:', payment);
 
     const order = new Order({
       user: userId,
       products,
       totalAmount,
       shippingAddress,
+      billingAddress,
+      payment,
       status: 'pending'
     });
 
+    console.log('Nouvelle commande créée:', order);
+
     await order.save();
-    console.log('Nouvelle commande créée:', order._id);
+    console.log('Commande sauvegardée avec succès:', order._id);
+
+    // Simuler un traitement de paiement réussi
+    order.payment.status = 'completed';
+    await order.save();
 
     res.status(201).json(order);
   } catch (error) {
-    console.error('Erreur lors de la création de la commande:', error);
-    res.status(500).json({ message: 'Erreur lors de la création de la commande' });
+    console.error('Erreur détaillée lors de la création de la commande:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    res.status(500).json({ 
+      message: 'Erreur lors de la création de la commande',
+      error: error.message 
+    });
   }
 };
 
@@ -89,5 +155,36 @@ exports.updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut:', error);
     res.status(500).json({ message: 'Erreur lors de la mise à jour du statut' });
+  }
+};
+
+// Mettre à jour le statut du paiement
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { paymentStatus, transactionId } = req.body;
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Commande non trouvée' });
+    }
+
+    // Vérifier si l'utilisateur est autorisé à modifier la commande
+    if (order.user.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Non autorisé' });
+    }
+
+    order.payment.status = paymentStatus;
+    if (transactionId) {
+      order.payment.transactionId = transactionId;
+    }
+    if (paymentStatus === 'completed') {
+      order.payment.paymentDate = new Date();
+    }
+
+    await order.save();
+    res.json(order);
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut de paiement:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour du statut de paiement' });
   }
 }; 

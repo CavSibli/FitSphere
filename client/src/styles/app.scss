@@ -1,4 +1,5 @@
-@use "./_variables" as *;
+@use './mixins' as *;
+@use './_variables' as *;
 
 // Layout principal
 .app {
@@ -13,7 +14,7 @@
   }
 
   &__footer {
-    background-color: darken($background-color, 5%);
+    background-color: color.scale($background-color, $lightness: -5%);
     padding: $spacing-lg 0;
     margin-top: auto;
   }
@@ -116,17 +117,17 @@
 
   &--success {
     background-color: rgba(green, 0.1);
-    color: darken(green, 10%);
+    color: color.scale(green, $lightness: -10%);
   }
 
   &--error {
     background-color: rgba(red, 0.1);
-    color: darken(red, 10%);
+    color: color.scale(red, $lightness: -10%);
   }
 
   &--info {
     background-color: rgba($primary-color, 0.1);
-    color: darken($primary-color, 10%);
+    color: color.scale($primary-color, $lightness: -10%);
   }
 }
 
@@ -176,4 +177,23 @@
       border-color: $primary-color;
     }
   }
+}
+
+.primary-button {
+  background-color: color.scale($primary-color, $lightness: -10%);
+}
+
+.gradient-bg {
+  background: linear-gradient(45deg, $primary-color, color.scale($primary-color, $lightness: -15%));
+}
+
+.hover-effect {
+  &:hover {
+    background-color: color.scale($primary-color, $lightness: -20%);
+  }
+}
+
+// Pour les ajustements plus complexes, utiliser color.adjust()
+.custom-shadow {
+  box-shadow: 0 4px 12px color.adjust($primary-color, $alpha: -0.7);
 } 

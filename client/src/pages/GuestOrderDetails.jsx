@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetGuestOrderDetailsQuery } from '../app/features/orders/guestOrdersApiSlice';
-import '../styles/OrderDetails.scss';
+import '../styles/GuestOrderDetails.scss';
 
 const GuestOrderDetails = () => {
   const { id } = useParams();

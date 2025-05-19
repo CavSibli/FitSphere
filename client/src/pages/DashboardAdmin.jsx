@@ -10,6 +10,7 @@ const DashboardAdmin = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('stats');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   // Queries RTK
   const { data: stats, isLoading: statsLoading } = useGetDashboardStatsQuery();
@@ -41,11 +42,7 @@ const DashboardAdmin = () => {
   };
 
   const handleViewOrder = (order) => {
-    if (order.user) {
-      navigate(`/admin/orders/${order._id}`);
-    } else {
-      navigate(`/admin/guest-orders/${order._id}`);
-    }
+    setExpandedOrderId(expandedOrderId === order._id ? null : order._id);
   };
 
   // Rendu des statistiques
@@ -131,43 +128,113 @@ const DashboardAdmin = () => {
             </thead>
             <tbody>
               {filteredOrders.map(order => {
-                // Déterminer le nom et l'email du client
-                let clientInfo = 'N/A';
-                if (order.customerInfo) {
-                  const { name, email, type } = order.customerInfo;
-                  clientInfo = type === 'registered' 
-                    ? `${name} (${email})`
-                    : `${name} (${email}) - Invité`;
-                }
-
                 return (
-                  <tr key={order._id}>
-                    <td>{order.orderNumber || order._id}</td>
-                    <td>{clientInfo}</td>
-                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td>{order.totalAmount?.toFixed(2)} €</td>
-                    <td>
-                      <select
-                        value={order.status}
-                        onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                        className={`status-select ${order.status}`}
-                      >
-                        <option value="pending">En attente</option>
-                        <option value="processing">En cours</option>
-                        <option value="shipped">Expédié</option>
-                        <option value="delivered">Livré</option>
-                        <option value="cancelled">Annulé</option>
-                      </select>
-                    </td>
-                    <td className="action-buttons">
-                      <button 
-                        onClick={() => handleViewOrder(order)}
-                        className="view-button"
-                      >
-                        Détails
-                      </button>
-                    </td>
-                  </tr>
+                  <React.Fragment key={`order-${order._id}`}>
+                    <tr key={`row-${order._id}`}>
+                      <td>{order.orderNumber || order._id}</td>
+                      <td>{order.customerInfo?.name} ({order.customerInfo?.email}) - {order.customerInfo?.type === 'registered' ? 'Client enregistré' : 'Client invité'}</td>
+                      <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td>{order.totalAmount?.toFixed(2)} €</td>
+                      <td>
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                          className={`status-select ${order.status}`}
+                        >
+                          <option value="pending">En attente</option>
+                          <option value="processing">En cours</option>
+                          <option value="shipped">Expédié</option>
+                          <option value="delivered">Livré</option>
+                          <option value="cancelled">Annulé</option>
+                        </select>
+                      </td>
+                      <td className="action-buttons">
+                        <button 
+                          onClick={() => handleViewOrder(order)}
+                          className={`view-button ${expandedOrderId === order._id ? 'active' : ''}`}
+                        >
+                          {expandedOrderId === order._id ? 'Masquer' : 'Détails'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedOrderId === order._id && (
+                      <tr key={`details-${order._id}`} className="order-details-row">
+                        <td colSpan="6">
+                          <div className="order-details-content">
+                            <div className="details-section">
+                              <h3>Informations client</h3>
+                              <p><strong>Nom:</strong> {order.customerInfo?.name}</p>
+                              <p><strong>Email:</strong> {order.customerInfo?.email}</p>
+                              <p><strong>Type:</strong> {order.customerInfo?.type === 'registered' ? 'Client enregistré' : 'Client invité'}</p>
+                            </div>
+
+                            <div className="details-section">
+                              <h3>Adresse de livraison</h3>
+                              <p><strong>Adresse:</strong> {order.shippingAddress?.street}</p>
+                              <p><strong>Ville:</strong> {order.shippingAddress?.city}</p>
+                              <p><strong>Code postal:</strong> {order.shippingAddress?.postalCode}</p>
+                              <p><strong>Pays:</strong> {order.shippingAddress?.country}</p>
+                            </div>
+
+                            <div className="details-section">
+                              <h3>Adresse de facturation</h3>
+                              <p><strong>Adresse:</strong> {order.billingAddress?.street}</p>
+                              <p><strong>Ville:</strong> {order.billingAddress?.city}</p>
+                              <p><strong>Code postal:</strong> {order.billingAddress?.postalCode}</p>
+                              <p><strong>Pays:</strong> {order.billingAddress?.country}</p>
+                            </div>
+
+                            <div className="details-section">
+                              <h3>Informations de paiement</h3>
+                              <p><strong>Méthode:</strong> {order.payment?.method === 'credit_card' ? 'Carte bancaire' : 'PayPal'}</p>
+                              <p><strong>Statut:</strong> {order.payment?.status === 'pending' ? 'En attente' : 
+                                                       order.payment?.status === 'completed' ? 'Payé' :
+                                                       order.payment?.status === 'failed' ? 'Échoué' :
+                                                       order.payment?.status === 'refunded' ? 'Remboursé' : 'N/A'}</p>
+                              <p><strong>Montant:</strong> {order.payment?.amount?.toFixed(2)} €</p>
+                              <p><strong>Date de paiement:</strong> {order.payment?.paymentDate ? new Date(order.payment.paymentDate).toLocaleDateString() : 'N/A'}</p>
+                              {order.payment?.method === 'credit_card' && (
+                                <>
+                                  <p><strong>Derniers chiffres:</strong> {order.payment?.paymentDetails?.cardLast4 || 'N/A'}</p>
+                                  <p><strong>Nom sur la carte:</strong> {order.payment?.paymentDetails?.cardName || 'N/A'}</p>
+                                </>
+                              )}
+                              {order.payment?.method === 'paypal' && (
+                                <p><strong>Email PayPal:</strong> {order.payment?.paymentDetails?.paypalEmail || 'N/A'}</p>
+                              )}
+                            </div>
+
+                            <div className="details-section">
+                              <h3>Produits commandés</h3>
+                              <div className="order-items">
+                                {order.products?.map((item, index) => (
+                                  <div 
+                                    key={item._id || index} 
+                                    className="order-item"
+                                  >
+                                    <div className="item-details">
+                                      <h4>{item.product?.name || 'Produit non disponible'}</h4>
+                                      <p>Quantité: {item.quantity}</p>
+                                      <p>Prix unitaire: {item.price?.toFixed(2)}€</p>
+                                      <p>Total: {(item.price * item.quantity).toFixed(2)}€</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="details-section">
+                              <h3>Résumé de la commande</h3>
+                              <p><strong>Numéro de commande:</strong> {order.orderNumber || order._id}</p>
+                              <p><strong>Date de commande:</strong> {new Date(order.createdAt).toLocaleDateString()}</p>
+                              <p><strong>Total:</strong> {order.totalAmount?.toFixed(2)} €</p>
+                              <p><strong>Statut:</strong> {order.status}</p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>

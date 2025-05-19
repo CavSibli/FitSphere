@@ -98,21 +98,21 @@ exports.getStats = async (req, res) => {
 // Obtenir toutes les commandes (utilisateurs + invités)
 exports.getAllOrders = async (req, res) => {
   try {
-    // Vérifier si l'utilisateur est admin
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Accès non autorisé' });
     }
 
-    // Récupérer les commandes des utilisateurs inscrits
+    // Récupérer les commandes utilisateurs avec populate
     const userOrders = await Order.find()
       .sort({ createdAt: -1 })
       .populate('user', 'username email')
       .populate('products.product')
       .select('-__v');
 
-    // Récupérer les commandes invitées
+    // Récupérer les commandes invitées avec populate
     const guestOrders = await GuestOrder.find()
       .sort({ createdAt: -1 })
+      .populate('products.product')
       .select('-__v');
 
     // Transformer les données des commandes utilisateurs
@@ -120,20 +120,20 @@ exports.getAllOrders = async (req, res) => {
       _id: order._id,
       orderNumber: order.orderNumber,
       customerInfo: {
-        name: order.user.username,
-        email: order.user.email,
+        name: order.user?.username || 'Utilisateur supprimé',
+        email: order.user?.email || 'Email non disponible',
         type: 'registered'
       },
       products: order.products.map(item => ({
-        name: item.product.name,
+        product: item.product || { name: 'Produit supprimé', price: item.price },
         quantity: item.quantity,
         price: item.price
       })),
       totalAmount: order.totalAmount,
       shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
       status: order.status,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
+      payment: order.payment,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt
     }));
@@ -148,27 +148,30 @@ exports.getAllOrders = async (req, res) => {
         type: 'guest'
       },
       products: order.products.map(item => ({
-        name: item.product.name,
+        product: item.product || { name: 'Produit supprimé', price: item.price },
         quantity: item.quantity,
         price: item.price
       })),
       totalAmount: order.totalAmount,
       shippingAddress: order.shippingAddress,
+      billingAddress: order.billingAddress,
       status: order.status,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
+      payment: order.payment,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt
     }));
 
-    // Combiner et trier toutes les commandes par date
+    // Combiner et trier toutes les commandes
     const allOrders = [...formattedUserOrders, ...formattedGuestOrders]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json(allOrders);
   } catch (error) {
     console.error('Erreur lors de la récupération des commandes:', error);
-    res.status(500).json({ message: 'Erreur lors de la récupération des commandes' });
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des commandes',
+      error: error.message 
+    });
   }
 };
 

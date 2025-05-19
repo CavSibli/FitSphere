@@ -102,7 +102,12 @@ const DashboardUser = () => {
                   </div>
                   <div className="order-details">
                     <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-                    <p>Total: {order.totalAmount?.toFixed(2) || order.total?.toFixed(2)} €</p>
+                    <p>Total: {order.totalAmount?.toFixed(2)} €</p>
+                    <p>Méthode de paiement: {order.payment?.method === 'credit_card' ? 'Carte bancaire' : 'PayPal'}</p>
+                    <p>Statut du paiement: {order.payment?.status === 'pending' ? 'En attente' : 
+                                         order.payment?.status === 'completed' ? 'Payé' :
+                                         order.payment?.status === 'failed' ? 'Échoué' :
+                                         order.payment?.status === 'refunded' ? 'Remboursé' : 'N/A'}</p>
                   </div>
                   <div className="order-products">
                     <h4>Produits commandés:</h4>
@@ -113,6 +118,14 @@ const DashboardUser = () => {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                  <div className="order-addresses">
+                    <div className="shipping-address">
+                      <h4>Adresse de livraison:</h4>
+                      <p>{order.shippingAddress?.street}</p>
+                      <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+                      <p>{order.shippingAddress?.country}</p>
+                    </div>
                   </div>
                 </div>
               ))}

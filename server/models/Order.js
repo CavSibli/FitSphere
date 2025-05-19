@@ -34,10 +34,42 @@ const orderSchema = new mongoose.Schema({
     default: 'pending'
   },
   shippingAddress: {
-    street: String,
-    city: String,
-    postalCode: String,
-    country: String
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true }
+  },
+  payment: {
+    method: {
+      type: String,
+      enum: ['card', 'paypal'],
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'pending'
+    },
+    transactionId: String,
+    paymentDate: Date,
+    amount: {
+      type: Number,
+      required: true
+    },
+    currency: {
+      type: String,
+      default: 'EUR'
+    },
+    paymentDetails: {
+      type: Map,
+      of: mongoose.Schema.Types.Mixed
+    }
+  },
+  billingAddress: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true }
   },
   createdAt: {
     type: Date,
