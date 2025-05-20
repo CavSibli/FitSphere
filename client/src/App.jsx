@@ -14,6 +14,7 @@ import ProductAdmin from './pages/ProductAdmin';
 import GuestOrderDetails from './pages/GuestOrderDetails';
 import EditProduct from './pages/EditProduct';
 import AddProduct from './pages/AddProduct';
+import ComingSoon from './pages/ComingSoon';
 import '@styles/app.scss';
 
 // Configuration de React Query
@@ -60,6 +61,7 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/guest-orders/:id" element={<GuestOrderDetails />} />
               <Route path="/order-confirmation/:id" element={<GuestOrderDetails />} />
+              <Route path="/coming-soon" element={<ComingSoon />} />
 
               {/* Routes protégées - User */}
               <Route 

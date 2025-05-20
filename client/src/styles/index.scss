@@ -49,6 +49,10 @@ select {
   color: inherit;
 }
 
+h1 {
+  margin-top: 45px;
+}
+
 // Container global
 .container {
   @include container;

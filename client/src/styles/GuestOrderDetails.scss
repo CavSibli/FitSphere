@@ -1,1 +1,189 @@
 // Styles pour la page OrderDetails 
+@use './mixins' as *;
+@use './_variables' as *;
+
+.order-details {
+  @include container;
+  font-family: $font-family-base;
+  color: $text-color;
+  padding: $spacing-xl 0;
+
+  .order-header {
+    @include flex-between;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+
+    h1 {
+      @include heading-1;
+      color: $primary-color;
+      font-size: clamp(1.5rem, 4vw, $font-size-xl);
+    }
+
+    .back-button {
+      @include button-base;
+      background-color: transparent;
+      color: $primary-color;
+      border: 1px solid $primary-color;
+      border-radius: 25px;
+      padding: $spacing-sm $spacing-md;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: $primary-color;
+        color: white;
+      }
+    }
+  }
+
+  .order-content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xl;
+
+    .order-section {
+      background-color: white;
+      padding: $spacing-lg;
+      border-radius: $border-radius-lg;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+      h2 {
+        @include heading-2;
+        margin-bottom: $spacing-md;
+        color: $text-color;
+      }
+
+      .info-grid {
+        @include grid(2, $spacing-md);
+
+        @include mobile {
+          @include grid(1, $spacing-sm);
+        }
+
+        .info-item {
+          display: flex;
+          flex-direction: column;
+          gap: $spacing-xs;
+
+          strong {
+            font-size: $font-size-sm;
+            color: $secondary-color;
+          }
+
+          span {
+            font-size: $font-size-md;
+            color: $text-color;
+          }
+        }
+      }
+
+      .address-info {
+        line-height: 1.6;
+        font-size: $font-size-md;
+        color: $text-color;
+      }
+
+      .items-list {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-md;
+
+        .order-item {
+          display: flex;
+          gap: $spacing-md;
+          align-items: center;
+          padding: $spacing-md;
+          background-color: #f9f9f9;
+          border-radius: $border-radius;
+
+          @include mobile {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+
+          .item-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: $border-radius;
+            flex-shrink: 0;
+          }
+
+          .item-details {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-xs;
+
+            h3 {
+              font-size: $font-size-lg;
+              color: $text-color;
+              margin: 0;
+            }
+
+            p {
+              font-size: $font-size-sm;
+              color: $secondary-color;
+              margin: 0;
+            }
+          }
+        }
+      }
+
+      .order-summary {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-sm;
+
+        .summary-item {
+          display: flex;
+          justify-content: space-between;
+          font-size: $font-size-md;
+          color: $text-color;
+
+          &.total {
+            font-weight: bold;
+            font-size: $font-size-lg;
+            color: $primary-color;
+            margin-top: $spacing-sm;
+          }
+        }
+      }
+    }
+  }
+
+  .status {
+    display: inline-block;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius;
+    font-size: $font-size-sm;
+    text-transform: capitalize;
+    font-weight: 600;
+
+    &.pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    &.completed {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    &.cancelled {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    &.processing {
+      background-color: #cce5ff;
+      color: #004085;
+    }
+  }
+
+  .error-message {
+    color: red;
+    font-size: $font-size-sm;
+    text-align: center;
+    margin: $spacing-md 0;
+  }
+}

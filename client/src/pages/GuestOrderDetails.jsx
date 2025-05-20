@@ -65,7 +65,6 @@ const GuestOrderDetails = () => {
           <div className="items-list">
             {order.products?.map((item, index) => (
               <div key={index} className="order-item">
-                <img src={item.product.image} alt={item.product.name} className="item-image" />
                 <div className="item-details">
                   <h3>{item.product.name}</h3>
                   <p>Quantité: {item.quantity}</p>
