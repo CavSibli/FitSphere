@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetUserProfileQuery } from '../app/features/auth/authApiSlice';
 import { useGetUserOrdersQuery } from '../app/features/orders/userOrdersApiSlice';
+import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
 import '../styles/DashboardUser.scss';
 
 const DashboardUser = () => {
@@ -18,6 +19,11 @@ const DashboardUser = () => {
     isLoading: isLoadingOrders,
     error: ordersError
   } = useGetUserOrdersQuery();
+
+  const {
+    data: products = [],
+    isLoading: isLoadingProducts
+  } = useGetProductsQuery();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -47,7 +53,13 @@ const DashboardUser = () => {
     return statusClassMap[status] || '';
   };
 
-  if (isLoadingProfile || isLoadingOrders) {
+  // Fonction pour obtenir le nom du produit à partir de son ID
+  const getProductName = (productId) => {
+    const product = products.find(p => p._id === productId);
+    return product ? product.name : 'Produit non trouvé';
+  };
+
+  if (isLoadingProfile || isLoadingOrders || isLoadingProducts) {
     return <div className="flex justify-center items-center min-h-screen">Chargement...</div>;
   }
 
@@ -112,11 +124,14 @@ const DashboardUser = () => {
                   <div className="order-products">
                     <h4>Produits commandés:</h4>
                     <ul>
-                      {order.products?.map((item, index) => (
-                        <li key={index}>
-                          {item.product?.name || 'Produit non disponible'} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
-                        </li>
-                      ))}
+                      {order.products?.map((item, index) => {
+                        const productId = typeof item.product === 'object' ? item.product._id : item.product;
+                        return (
+                          <li key={index}>
+                            REF: {productId} - {getProductName(productId)} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                   <div className="order-addresses">
