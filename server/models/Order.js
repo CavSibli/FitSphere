@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
+  orderNumber: {
+    type: String,
+    unique: true,
+    required: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -30,6 +35,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
+    required: true,
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
@@ -40,53 +46,49 @@ const orderSchema = new mongoose.Schema({
     country: { type: String, required: true }
   },
   payment: {
-    method: {
-      type: String,
-      enum: ['card', 'paypal'],
-      required: true
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'completed', 'failed', 'refunded'],
-      default: 'pending'
-    },
-    transactionId: String,
-    paymentDate: Date,
-    amount: {
-      type: Number,
-      required: true
-    },
-    currency: {
-      type: String,
-      default: 'EUR'
-    },
-    paymentDetails: {
-      type: Map,
-      of: mongoose.Schema.Types.Mixed
-    }
+    method: { type: String, required: true },
+    status: { type: String, required: true },
+    amount: { type: Number, required: true },
+    transactionId: { type: String },
+    paymentDate: { type: Date },
+    paymentDetails: { type: mongoose.Schema.Types.Mixed }
   },
   billingAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
     postalCode: { type: String, required: true },
     country: { type: String, required: true }
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
+  }
+}, {
+  timestamps: true
+});
+
+// Middleware pour générer le numéro de commande avant la sauvegarde
+orderSchema.pre('validate', async function(next) {
+  try {
+    if (!this.orderNumber) {
+      const date = new Date();
+      const year = date.getFullYear().toString().slice(-2);
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      
+      // Trouver la dernière commande du jour
+      const lastOrder = await this.constructor.findOne({
+        orderNumber: new RegExp(`^O${year}${month}${day}`)
+      }).sort({ orderNumber: -1 });
+
+      let sequence = '0001';
+      if (lastOrder) {
+        const lastSequence = parseInt(lastOrder.orderNumber.slice(-4));
+        sequence = (lastSequence + 1).toString().padStart(4, '0');
+      }
+
+      this.orderNumber = `O${year}${month}${day}${sequence}`;
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
-// Middleware pour mettre à jour updatedAt avant chaque sauvegarde
-orderSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-const Order = mongoose.model('Order', orderSchema);
-
-module.exports = Order; 
+module.exports = mongoose.model('Order', orderSchema); 

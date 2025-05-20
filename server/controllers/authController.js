@@ -5,9 +5,11 @@ const jwt = require('jsonwebtoken');
 // Générer un token JWT
 const generateToken = (id) => {
   try {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id }, process.env.JWT_SECRET || 'votre_secret_jwt', {
       expiresIn: '30d',
     });
+    console.log('Token généré:', token);
+    return token;
   } catch (error) {
     console.error('Erreur lors de la génération du token:', error);
     throw error;
@@ -35,14 +37,18 @@ exports.register = async (req, res) => {
 
     // Générer le token
     const token = generateToken(user._id);
+    console.log('Token généré pour le nouvel utilisateur:', user._id);
 
-    res.status(201).json({
+    const response = {
       _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
-      token,
-    });
+      token
+    };
+    console.log('Réponse d\'enregistrement:', { ...response, token: '***' });
+
+    res.status(201).json(response);
   } catch (error) {
     console.error('Erreur lors de l\'enregistrement:', error);
     res.status(500).json({ message: 'Erreur lors de l\'enregistrement' });
@@ -79,47 +85,30 @@ exports.login = async (req, res) => {
     });
 
     // Vérifier le mot de passe
-    try {
-      console.log('Vérification du mot de passe');
-      const isMatch = await user.matchPassword(password);
-      console.log('Résultat de la vérification du mot de passe:', isMatch);
-      
-      if (!isMatch) {
-        console.log('Mot de passe incorrect pour:', email);
-        return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
-      }
-    } catch (error) {
-      console.error('Erreur lors de la vérification du mot de passe:', error);
-      return res.status(500).json({ 
-        message: 'Erreur lors de la vérification du mot de passe',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log('Mot de passe incorrect pour l\'utilisateur:', email);
+      return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
     // Générer le token
-    console.log('Génération du token pour l\'utilisateur:', user._id);
     const token = generateToken(user._id);
-    console.log('Token généré avec succès');
+    console.log('Token généré pour l\'utilisateur:', user._id);
 
-    console.log('Connexion réussie pour:', { 
-      id: user._id, 
-      email: user.email,
-      role: user.role 
-    });
-
-    res.json({
+    // Envoyer la réponse
+    const response = {
       _id: user._id,
       username: user.username,
       email: user.email,
       role: user.role,
-      token,
-    });
+      token
+    };
+    console.log('Réponse de connexion:', { ...response, token: '***' });
+
+    res.json(response);
   } catch (error) {
-    console.error('Erreur détaillée lors de la connexion:', error);
-    res.status(500).json({ 
-      message: 'Erreur lors de la connexion',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    console.error('Erreur lors de la connexion:', error);
+    res.status(500).json({ message: 'Erreur lors de la connexion' });
   }
 };
 

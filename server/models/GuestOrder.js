@@ -2,97 +2,44 @@ const mongoose = require('mongoose');
 
 const guestOrderSchema = new mongoose.Schema({
   guestInfo: {
-    name: {
-      type: String,
-      required: true
-    },
-    email: {
-      type: String,
-      required: true
-    }
+    name: String,
+    email: String,
+    phone: String
   },
   products: [{
     product: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
-      required: true
+      ref: 'Product'
     },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    price: {
-      type: Number,
-      required: true
-    }
+    quantity: Number,
+    price: Number
   }],
-  totalAmount: {
-    type: Number,
-    required: true
-  },
+  totalAmount: Number,
   shippingAddress: {
-    street: {
-      type: String,
-      required: true
-    },
-    city: {
-      type: String,
-      required: true
-    },
-    postalCode: {
-      type: String,
-      required: true
-    },
-    country: {
-      type: String,
-      required: true
-    }
+    street: String,
+    city: String,
+    postalCode: String,
+    country: String
   },
   billingAddress: {
-    street: {
-      type: String,
-      required: true
-    },
-    city: {
-      type: String,
-      required: true
-    },
-    postalCode: {
-      type: String,
-      required: true
-    },
-    country: {
-      type: String,
-      required: true
-    }
+    street: String,
+    city: String,
+    postalCode: String,
+    country: String
   },
   status: {
     type: String,
-    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
   payment: {
-    method: {
-      type: String,
-      required: true,
-      enum: ['credit_card', 'paypal']
-    },
+    method: String,
     status: {
       type: String,
-      required: true,
-      enum: ['pending', 'completed', 'failed', 'refunded']
+      default: 'pending'
     },
-    amount: {
-      type: Number,
-      required: true
-    },
-    transactionId: {
-      type: String
-    },
-    paymentDate: {
-      type: Date
-    },
+    amount: Number,
+    transactionId: String,
+    paymentDate: Date,
     paymentDetails: {
       type: Map,
       of: mongoose.Schema.Types.Mixed

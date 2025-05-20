@@ -17,10 +17,9 @@ const Cart = () => {
     city: '',
     postalCode: '',
     country: 'France',
-    paymentMethod: 'card',
+    paymentMethod: 'credit_card',
     phone: '',
     company: '',
-    additionalInfo: '',
     cardNumber: '',
     cardExpiry: '',
     cardCVC: '',
@@ -94,7 +93,7 @@ const Cart = () => {
       return false;
     }
 
-    if (formData.paymentMethod === 'card') {
+    if (formData.paymentMethod === 'credit_card') {
       if (!formData.cardNumber || formData.cardNumber.length < 16) {
         setPaymentError('Veuillez entrer un numéro de carte valide');
         return false;
@@ -111,6 +110,11 @@ const Cart = () => {
         setPaymentError('Veuillez entrer le nom sur la carte');
         return false;
       }
+    } else if (formData.paymentMethod === 'paypal') {
+      if (!formData.paypalEmail && !formData.email) {
+        setPaymentError('Veuillez entrer une adresse email PayPal');
+        return false;
+      }
     }
 
     return true;
@@ -119,6 +123,10 @@ const Cart = () => {
   const handleGuestCheckout = async (e) => {
     e.preventDefault();
     try {
+      if (!validateForm()) {
+        return;
+      }
+
       const orderData = {
         guestInfo: {
           name: formData.name,
@@ -145,7 +153,7 @@ const Cart = () => {
         },
         status: 'pending',
         payment: {
-          method: formData.paymentMethod === 'card' ? 'credit_card' : 'paypal',
+          method: formData.paymentMethod === 'credit_card' ? 'credit_card' : 'paypal',
           status: 'pending',
           amount: total,
           transactionId: `TXN-${Date.now()}`,
@@ -157,14 +165,17 @@ const Cart = () => {
             cardName: formData.cardName,
             cardExpiry: formData.cardExpiry
           }
-        },
-        additionalInfo: formData.additionalInfo
+        }
       };
 
       const result = await createGuestOrder(orderData).unwrap();
-      localStorage.removeItem('cart');
-      setCartItems([]);
-      navigate(`/order-confirmation/${result._id}`);
+      if (result.success) {
+        localStorage.removeItem('cart');
+        setCartItems([]);
+        navigate(`/order-confirmation/${result._id}`);
+      } else {
+        setPaymentError(result.message || 'Erreur lors de la création de la commande');
+      }
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error);
       setPaymentError(error.data?.message || 'Erreur lors de la création de la commande. Veuillez réessayer.');
@@ -179,7 +190,12 @@ const Cart = () => {
         return;
       }
 
+      if (!validateForm()) {
+        return;
+      }
+
       const orderData = {
+        user: user._id,
         products: cartItems.map(item => ({
           product: item.product._id,
           quantity: item.quantity,
@@ -198,29 +214,31 @@ const Cart = () => {
           postalCode: formData.postalCode,
           country: formData.country
         },
+        status: 'pending',
         payment: {
-          method: formData.paymentMethod === 'card' ? 'card' : 'paypal',
+          method: formData.paymentMethod === 'credit_card' ? 'credit_card' : 'paypal',
           status: 'pending',
           amount: total,
+          transactionId: `TXN-${Date.now()}`,
+          paymentDate: new Date(),
           paymentDetails: formData.paymentMethod === 'paypal' ? {
             paypalEmail: formData.paypalEmail || formData.email
           } : {
             cardLast4: formData.cardNumber.slice(-4),
             cardName: formData.cardName,
             cardExpiry: formData.cardExpiry
-          },
-          currency: 'EUR',
-          paymentDate: new Date(),
-          transactionId: `txn_${Math.random().toString(36).substr(2, 9)}`
-        },
-        status: 'pending'
+          }
+        }
       };
 
-      console.log('Données de commande qui seront envoyées:', orderData);
       const result = await createUserOrder(orderData).unwrap();
-      localStorage.removeItem('cart');
-      setCartItems([]);
-      navigate(`/order-confirmation/${result._id}`);
+      if (result.success) {
+        localStorage.removeItem('cart');
+        setCartItems([]);
+        navigate(`/order-confirmation/${result._id}`);
+      } else {
+        setPaymentError(result.message || 'Erreur lors de la création de la commande');
+      }
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error);
       setPaymentError(error.data?.message || 'Erreur lors de la création de la commande. Veuillez réessayer.');
@@ -464,11 +482,11 @@ const Cart = () => {
                   onChange={handleInputChange}
                   required
                 >
-                  <option value="card">Carte bancaire</option>
+                  <option value="credit_card">Carte bancaire</option>
                   <option value="paypal">PayPal</option>
                 </select>
 
-                {formData.paymentMethod === 'card' && (
+                {formData.paymentMethod === 'credit_card' && (
                   <div className="card-details">
                     <input
                       type="text"
@@ -519,18 +537,6 @@ const Cart = () => {
                     />
                   </div>
                 )}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="additionalInfo">Instructions de livraison (optionnel)</label>
-                <textarea
-                  id="additionalInfo"
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleInputChange}
-                  placeholder="Instructions spéciales pour la livraison..."
-                  rows="3"
-                />
               </div>
 
               <div className="form-actions">
