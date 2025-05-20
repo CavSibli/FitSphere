@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   orderNumber: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -64,7 +63,7 @@ const orderSchema = new mongoose.Schema({
 });
 
 // Middleware pour générer le numéro de commande avant la sauvegarde
-orderSchema.pre('validate', async function(next) {
+orderSchema.pre('save', async function(next) {
   try {
     if (!this.orderNumber) {
       const date = new Date();
