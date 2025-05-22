@@ -1,6 +1,22 @@
 @use './mixins' as *;
 @use './_variables' as *;
 
+// Variables spécifiques au profil
+$profile-section-bg: $background-color;
+$profile-section-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+$profile-section-radius: $border-radius-lg;
+$profile-section-padding: $spacing-xl;
+
+$profile-heading-color: $primary-color;
+$profile-heading-size: $font-size-xl;
+$profile-heading-weight: 600;
+$profile-heading-margin: $spacing-md;
+
+$profile-dt-color: $text-color;
+$profile-dt-weight: 500;
+$profile-dd-color: $text-color;
+$profile-item-spacing: $spacing-md;
+
 .dashboard-header {
   @include flex-between;
   margin-bottom: $spacing-lg;
@@ -78,7 +94,46 @@
 }
 
 .bg-white {
-  background-color: $background-color;
+  background-color: $profile-section-bg;
+  box-shadow: $profile-section-shadow;
+  border-radius: $profile-section-radius;
+  padding: $profile-section-padding;
+}
+
+#profile-heading {
+  color: $profile-heading-color;
+  font-size: $profile-heading-size;
+  font-weight: $profile-heading-weight;
+  margin-bottom: $profile-heading-margin;
+}
+
+dl[role="list"] {
+  display: flex;
+  flex-direction: column;
+  gap: $profile-item-spacing;
+
+  > div[role="listitem"] {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: $spacing-sm;
+    align-items: baseline;
+
+    @include tablet {
+      grid-template-columns: 200px 1fr;
+    }
+
+    dt {
+      color: $profile-dt-color;
+      font-weight: $profile-dt-weight;
+      font-size: $font-size-md;
+    }
+
+    dd {
+      color: $profile-dd-color;
+      font-size: $font-size-md;
+      margin: 0;
+    }
+  }
 }
 
 .shadow-md {

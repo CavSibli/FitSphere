@@ -5,6 +5,10 @@ $mobile: 576px;
 $tablet: 768px;
 $desktop: 1024px;
 
+// Polices
+$font-family-heading: 'Montserrat', sans-serif;
+$font-family-base: 'Lato', sans-serif;
+
 // Couleurs principales
 $primary-color: #007bff;
 $secondary-color: #6c757d;
@@ -20,7 +24,6 @@ $spacing-lg: 1.5rem;
 $spacing-xl: 2rem;
 
 // Typography
-$font-family-base: 'Arial', sans-serif;
 $font-size-base: 16px;
 $font-size-sm: 14px;
 $font-size-md: 16px;

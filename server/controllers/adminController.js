@@ -233,7 +233,8 @@ exports.deleteUser = async (req, res) => {
       return res.status(403).json({ message: 'Impossible de supprimer un administrateur' });
     }
 
-    await user.remove();
+    // Utiliser findByIdAndDelete au lieu de remove()
+    await User.findByIdAndDelete(req.params.userId);
     res.json({ message: 'Utilisateur supprimé avec succès' });
   } catch (error) {
     console.error('Erreur lors de la suppression de l\'utilisateur:', error);

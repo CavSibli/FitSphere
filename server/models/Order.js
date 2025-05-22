@@ -70,7 +70,7 @@ orderSchema.pre('save', async function(next) {
       const year = date.getFullYear().toString().slice(-2);
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const day = date.getDate().toString().padStart(2, '0');
-      
+
       // Trouver la dernière commande du jour
       const lastOrder = await this.constructor.findOne({
         orderNumber: new RegExp(`^O${year}${month}${day}`)
@@ -84,7 +84,7 @@ orderSchema.pre('save', async function(next) {
 
       this.orderNumber = `O${year}${month}${day}${sequence}`;
     }
-    next();
+  next();
   } catch (error) {
     next(error);
   }

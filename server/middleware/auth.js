@@ -22,7 +22,7 @@ const auth = async (req, res, next) => {
     console.log('Token extrait:', token);
 
     // Vérifier le token avec une valeur par défaut pour JWT_SECRET
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'votre_secret_jwt');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Token décodé:', decoded);
 
     // Vérifier si l'utilisateur existe

@@ -10,10 +10,18 @@ export const usersApiSlice = apiSlice.injectEndpoints({
       query: () => '/admin/stats',
       providesTags: ['Stats'],
     }),
+    deleteUser: builder.mutation({
+      query: (userId) => ({
+        url: `/admin/users/${userId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Users'],
+    }),
   }),
 });
 
 export const {
   useGetUsersQuery,
   useGetDashboardStatsQuery,
+  useDeleteUserMutation,
 } = usersApiSlice; 

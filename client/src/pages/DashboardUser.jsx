@@ -1,34 +1,60 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGetUserProfileQuery } from '../app/features/auth/authApiSlice';
 import { useGetUserOrdersQuery } from '../app/features/orders/userOrdersApiSlice';
 import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../app/features/auth/authSlice';
 import '../styles/DashboardUser.scss';
 
 const DashboardUser = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   
   const { 
-    data: user, 
+    data: userProfile, 
     isLoading: isLoadingProfile, 
-    error: profileError 
-  } = useGetUserProfileQuery();
+    error: profileError,
+    refetch: refetchProfile
+  } = useGetUserProfileQuery(undefined, {
+    skip: !isAuthenticated
+  });
 
   const {
     data: userOrders = [],
     isLoading: isLoadingOrders,
-    error: ordersError
-  } = useGetUserOrdersQuery();
+    error: ordersError,
+    refetch: refetchOrders
+  } = useGetUserOrdersQuery(undefined, {
+    skip: !isAuthenticated
+  });
 
   const {
     data: products = [],
-    isLoading: isLoadingProducts
-  } = useGetProductsQuery();
+    isLoading: isLoadingProducts,
+    refetch: refetchProducts
+  } = useGetProductsQuery(undefined, {
+    skip: !isAuthenticated
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refetchProfile();
+      refetchOrders();
+      refetchProducts();
+    }
+  }, [isAuthenticated, refetchProfile, refetchOrders, refetchProducts]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    dispatch(logout());
+    window.location.href = '/login';
   };
 
   const getStatusLabel = (status) => {
@@ -53,101 +79,143 @@ const DashboardUser = () => {
     return statusClassMap[status] || '';
   };
 
-  // Fonction pour obtenir le nom du produit à partir de son ID
   const getProductName = (productId) => {
     const product = products.find(p => p._id === productId);
     return product ? product.name : 'Produit non trouvé';
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div role="status" aria-label="Vérification de l'authentification" className="flex justify-center items-center min-h-screen">
+        Vérification de l'authentification...
+      </div>
+    );
+  }
+
   if (isLoadingProfile || isLoadingOrders || isLoadingProducts) {
-    return <div className="flex justify-center items-center min-h-screen">Chargement...</div>;
+    return (
+      <div role="status" aria-label="Chargement du tableau de bord" className="flex justify-center items-center min-h-screen">
+        Chargement...
+      </div>
+    );
   }
 
   if (profileError) {
-    if (profileError.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      navigate('/login');
-      return null;
-    }
-    return <div className="text-red-500 text-center">Erreur lors du chargement du profil</div>;
-  }
-
-  if (ordersError) {
-    return <div className="text-red-500 text-center">Erreur lors du chargement des commandes</div>;
+    return (
+      <div role="alert" aria-label="Erreur de chargement du profil" className="text-red-500 text-center">
+        Erreur lors du chargement du profil
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="dashboard-header">
+    <div className="container mx-auto px-4 py-8" role="region" aria-label="Tableau de bord utilisateur">
+      <header className="dashboard-header">
         <h1 className="text-3xl font-bold">Tableau de bord utilisateur</h1>
-        <button onClick={handleLogout} className="logout-button">
+        <button 
+          onClick={handleLogout} 
+          className="logout-button"
+          aria-label="Se déconnecter de votre compte"
+        >
           Déconnexion
         </button>
-      </div>
+      </header>
       
-      {user && (
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Profil</h2>
-          <div className="space-y-4">
-            <p><span className="font-medium">Nom d'utilisateur:</span> {user.username}</p>
-            <p><span className="font-medium">Email:</span> {user.email}</p>
-            <p><span className="font-medium">Rôle:</span> {user.role}</p>
+      {userProfile && (
+        <section className="bg-white shadow-md rounded-lg p-6" aria-labelledby="profile-heading">
+          <h2 id="profile-heading" className="text-xl font-semibold mb-4">Profil</h2>
+          <dl className="space-y-4" role="list" aria-label="Informations du profil">
+            <div role="listitem">
+              <dt className="font-medium">Nom d'utilisateur:</dt>
+              <dd>{userProfile.username}</dd>
+            </div>
+            <div role="listitem">
+              <dt className="font-medium">Email:</dt>
+              <dd>{userProfile.email}</dd>
           </div>
+            <div role="listitem">
+              <dt className="font-medium">Rôle:</dt>
+              <dd>{userProfile.role}</dd>
         </div>
+          </dl>
+        </section>
       )}
 
-      <div className="mt-8">
+      <section className="mt-8" aria-labelledby="orders-heading">
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Commandes récentes</h2>
+          <h2 id="orders-heading" className="text-xl font-semibold mb-4">Commandes récentes</h2>
           {userOrders.length === 0 ? (
-            <p className="text-gray-600">Aucune commande récente</p>
+            <p className="text-gray-600" role="status">Aucune commande récente</p>
           ) : (
-            <div className="orders-list">
+            <div className="orders-list" role="list" aria-label="Liste des commandes">
               {userOrders.map((order) => (
-                <div key={order._id} className="order-card">
-                  <div className="order-header">
+                <article key={order._id} className="order-card" role="listitem">
+                  <header className="order-header">
                     <h3>Commande #{order._id}</h3>
-                    <span className={`status-badge ${getStatusClass(order.status)}`}>
+                    <span 
+                      className={`status-badge ${getStatusClass(order.status)}`}
+                      role="status"
+                      aria-label={`Statut de la commande: ${getStatusLabel(order.status)}`}
+                    >
                       {getStatusLabel(order.status)}
                     </span>
-                  </div>
-                  <div className="order-details">
-                    <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-                    <p>Total: {order.totalAmount?.toFixed(2)} €</p>
-                    <p>Méthode de paiement: {order.payment?.method === 'credit_card' ? 'Carte bancaire' : 'PayPal'}</p>
-                    <p>Statut du paiement: {order.payment?.status === 'pending' ? 'En attente' : 
+                  </header>
+                  <div className="order-details" role="group" aria-label="Détails de la commande">
+                    <dl>
+                      <dt>Date:</dt>
+                      <dd>{new Date(order.createdAt).toLocaleDateString()}</dd>
+                      <dt>Total:</dt>
+                      <dd>{order.totalAmount?.toFixed(2)} €</dd>
+                      <dt>Méthode de paiement:</dt>
+                      <dd>{order.payment?.method === 'credit_card' ? 'Carte bancaire' : 'PayPal'}</dd>
+                      <dt>Statut du paiement:</dt>
+                      <dd>
+                        {order.payment?.status === 'pending' ? 'En attente' : 
                                          order.payment?.status === 'completed' ? 'Payé' :
                                          order.payment?.status === 'failed' ? 'Échoué' :
-                                         order.payment?.status === 'refunded' ? 'Remboursé' : 'N/A'}</p>
+                         order.payment?.status === 'refunded' ? 'Remboursé' : 'N/A'}
+                      </dd>
+                    </dl>
                   </div>
-                  <div className="order-products">
+                  <div className="order-products" role="group" aria-label="Produits de la commande">
                     <h4>Produits commandés:</h4>
-                    <ul>
+                    <ul role="list" aria-label="Liste des produits">
                       {order.products?.map((item, index) => {
                         const productId = typeof item.product === 'object' ? item.product._id : item.product;
                         return (
-                          <li key={index}>
+                          <li key={index} role="listitem">
                             REF: {productId} - {getProductName(productId)} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
-                          </li>
+                        </li>
                         );
                       })}
                     </ul>
                   </div>
-                  <div className="order-addresses">
-                    <div className="shipping-address">
+                  <div className="order-addresses" role="group" aria-label="Adresses de la commande">
+                    <div className="shipping-address" role="group" aria-label="Adresse de livraison">
                       <h4>Adresse de livraison:</h4>
+                      <address>
                       <p>{order.shippingAddress?.street}</p>
                       <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
                       <p>{order.shippingAddress?.country}</p>
+                      </address>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
         </div>
+      </section>
+
+      {ordersError && (
+        <div 
+          className="text-red-500 text-center" 
+          role="alert" 
+          aria-label="Erreur lors du chargement des commandes"
+        >
+          Erreur lors du chargement des commandes
       </div>
+      )}
     </div>
   );
 };

@@ -235,7 +235,7 @@ const Cart = () => {
       if (result.success) {
         localStorage.removeItem('cart');
         setCartItems([]);
-        navigate(`/order-confirmation/${result._id}`);
+        navigate('/dashboard-user');
       } else {
         setPaymentError(result.message || 'Erreur lors de la création de la commande');
       }
@@ -277,23 +277,28 @@ const Cart = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="cart-container">
-        <h1>Votre Panier</h1>
-        <div className="empty-cart">
+      <section className="cart-container" aria-labelledby="cart-heading">
+        <h1 id="cart-heading">Votre Panier</h1>
+        <div className="empty-cart" role="status" aria-label="État du panier">
           <p>Votre panier est vide</p>
-          <button onClick={() => navigate('/products')} className="continue-shopping">
+          <button 
+            onClick={() => navigate('/products')} 
+            className="continue-shopping"
+            aria-label="Continuer vos achats"
+          >
             Continuer vos achats
           </button>
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="cart-container">
-      <h1>Votre Panier</h1>
+    <section className="cart-container" aria-labelledby="cart-heading">
+      <h1 id="cart-heading">Votre Panier</h1>
       <div className="cart-content">
-        <div className="cart-items">
+        <section className="cart-items" aria-labelledby="cart-items-heading">
+          <h2 id="cart-items-heading" className="visually-hidden">Liste des produits dans le panier</h2>
           {cartItems.map((item) => {
             if (!item?.product) {
               console.log('Invalid item found:', item);
@@ -301,11 +306,11 @@ const Cart = () => {
             }
 
             return (
-              <div key={item.product._id} className="cart-item">
+              <article key={item.product._id} className="cart-item" aria-labelledby={`item-name-${item.product._id}`}>
                 <div className="item-image">
                   <img 
                     src={item.product.image} 
-                    alt={item.product.name}
+                    alt={`${item.product.name} - ${item.product.price}€`}
                     onError={(e) => {
                       console.log('Image loading error for product:', item.product);
                       e.target.src = 'placeholder-image-url';
@@ -313,29 +318,45 @@ const Cart = () => {
                   />
                 </div>
                 <div className="item-details">
-                  <h3>{item.product.name}</h3>
-                  <p className="item-price">{item.product.price} €</p>
-                  <div className="quantity-controls">
-                    <button onClick={() => updateQuantity(item.product._id, item.quantity - 1)}>-</button>
-                    <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.product._id, item.quantity + 1)}>+</button>
+                  <h3 id={`item-name-${item.product._id}`}>{item.product.name}</h3>
+                  <p className="item-price" aria-label={`Prix unitaire: ${item.product.price}€`}>
+                    {item.product.price} €
+                  </p>
+                  <div className="quantity-controls" role="group" aria-label={`Contrôles de quantité pour ${item.product.name}`}>
+                    <button 
+                      onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                      aria-label="Diminuer la quantité"
+                      className="quantity-button"
+                    >-</button>
+                    <span aria-live="polite" aria-label={`Quantité actuelle: ${item.quantity}`}>
+                      {item.quantity}
+                    </span>
+                    <button 
+                      onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                      aria-label="Augmenter la quantité"
+                      className="quantity-button"
+                    >+</button>
                   </div>
-                  <button onClick={() => removeItem(item.product._id)} className="remove-item">
+                  <button 
+                    onClick={() => removeItem(item.product._id)} 
+                    className="remove-item"
+                    aria-label={`Supprimer ${item.product.name} du panier`}
+                  >
                     Supprimer
                   </button>
                 </div>
-              </div>
+              </article>
             );
           })}
-        </div>
+        </section>
 
-        <div className="cart-summary">
-          <h2>Résumé de la commande</h2>
+        <aside className="cart-summary" aria-labelledby="cart-summary-heading">
+          <h2 id="cart-summary-heading">Résumé de la commande</h2>
           <div className="summary-details">
-            <p>Total : {total.toFixed(2)} €</p>
+            <p>Total : <strong aria-label={`Total de la commande: ${total.toFixed(2)}€`}>{total.toFixed(2)} €</strong></p>
           </div>
           {!showCheckoutForm && (
-            <div className="checkout-options">
+            <nav className="checkout-options" aria-label="Options de commande">
               {user ? (
                 <button 
                   onClick={() => {
@@ -343,6 +364,7 @@ const Cart = () => {
                     setShowCheckoutForm(true);
                   }} 
                   className="checkout-button"
+                  aria-label="Commander en tant qu'utilisateur connecté"
                 >
                   Commander en tant qu'utilisateur
                 </button>
@@ -350,6 +372,7 @@ const Cart = () => {
                 <button 
                   onClick={() => navigate('/login')} 
                   className="checkout-button"
+                  aria-label="Se connecter pour commander"
                 >
                   Se connecter pour commander
                 </button>
@@ -360,24 +383,33 @@ const Cart = () => {
                   setShowCheckoutForm(true);
                 }} 
                 className="checkout-button guest"
+                aria-label="Commander en tant qu'invité"
               >
                 Commander en tant qu'invité
               </button>
-            </div>
+            </nav>
           )}
-        </div>
+        </aside>
 
         {showCheckoutForm && (
-          <div className="checkout-form-container">
-            <h2>{isGuest ? 'Commander en tant qu\'invité' : 'Commander en tant qu\'utilisateur'}</h2>
+          <section className="checkout-form-container" aria-labelledby="checkout-form-heading">
+            <h2 id="checkout-form-heading">
+              {isGuest ? 'Commander en tant qu\'invité' : 'Commander en tant qu\'utilisateur'}
+            </h2>
             {paymentError && (
-              <div className="error-message">
+              <div className="error-message" role="alert" aria-live="assertive">
                 {paymentError}
               </div>
             )}
-            <form onSubmit={handleCheckout} className="checkout-form">
+            <form 
+              onSubmit={handleCheckout} 
+              className="checkout-form" 
+              aria-label="Formulaire de commande"
+              noValidate
+            >
               {isGuest && (
-                <>
+                <fieldset aria-labelledby="personal-info-legend">
+                  <legend id="personal-info-legend">Informations personnelles</legend>
                   <div className="form-group">
                     <label htmlFor="name">Nom complet *</label>
                     <input
@@ -388,6 +420,8 @@ const Cart = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="Votre nom complet"
+                      aria-required="true"
+                      aria-label="Votre nom complet"
                     />
                   </div>
                   <div className="form-group">
@@ -400,6 +434,8 @@ const Cart = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="votre@email.com"
+                      aria-required="true"
+                      aria-label="Votre adresse email"
                     />
                   </div>
                   <div className="form-group">
@@ -412,11 +448,15 @@ const Cart = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="06 12 34 56 78"
+                      aria-required="true"
+                      aria-label="Votre numéro de téléphone"
                     />
                   </div>
-                </>
+                </fieldset>
               )}
               
+              <fieldset aria-labelledby="shipping-legend">
+                <legend id="shipping-legend">Adresse de livraison</legend>
               <div className="form-group">
                 <label htmlFor="street">Adresse de livraison *</label>
                 <input
@@ -427,6 +467,8 @@ const Cart = () => {
                   onChange={handleInputChange}
                   required
                   placeholder="Numéro et nom de rue"
+                    aria-required="true"
+                    aria-label="Votre adresse de livraison"
                 />
               </div>
               
@@ -441,6 +483,8 @@ const Cart = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Votre ville"
+                      aria-required="true"
+                      aria-label="Votre ville"
                   />
                 </div>
                 
@@ -454,6 +498,8 @@ const Cart = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Code postal"
+                      aria-required="true"
+                      aria-label="Votre code postal"
                   />
                 </div>
               </div>
@@ -466,6 +512,8 @@ const Cart = () => {
                   value={formData.country}
                   onChange={handleInputChange}
                   required
+                    aria-required="true"
+                    aria-label="Sélectionnez votre pays"
                 >
                   <option value="France">France</option>
                   <option value="Belgique">Belgique</option>
@@ -473,71 +521,116 @@ const Cart = () => {
                   <option value="Luxembourg">Luxembourg</option>
                 </select>
               </div>
+              </fieldset>
 
-              <div className="payment-section">
-                <h3>Méthode de paiement</h3>
+              <fieldset aria-labelledby="payment-legend">
+                <legend id="payment-legend">Méthode de paiement</legend>
+                <div className="form-group">
+                  <label htmlFor="paymentMethod">Méthode de paiement *</label>
                 <select
+                    id="paymentMethod"
                   name="paymentMethod"
                   value={formData.paymentMethod}
                   onChange={handleInputChange}
                   required
+                    aria-required="true"
+                    aria-label="Sélectionnez votre méthode de paiement"
                 >
                   <option value="credit_card">Carte bancaire</option>
                   <option value="paypal">PayPal</option>
                 </select>
+                </div>
 
                 {formData.paymentMethod === 'credit_card' && (
-                  <div className="card-details">
+                  <div className="card-details" role="group" aria-labelledby="card-details-legend">
+                    <div id="card-details-legend" className="visually-hidden">Détails de la carte bancaire</div>
+                    <div className="form-group">
+                      <label htmlFor="cardNumber">Numéro de carte *</label>
                     <input
                       type="text"
-                      name="cardName"
-                      placeholder="Nom sur la carte"
-                      value={formData.cardName}
+                        id="cardNumber"
+                        name="cardNumber"
+                        placeholder="1234 5678 9012 3456"
+                        value={formData.cardNumber}
                       onChange={handleInputChange}
                       required
+                        aria-required="true"
+                        aria-label="Numéro de votre carte bancaire"
+                        pattern="[0-9\s]{16,19}"
+                        maxLength="19"
                     />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="cardName">Nom sur la carte *</label>
                     <input
                       type="text"
-                      name="cardNumber"
-                      placeholder="Numéro de carte"
-                      value={formData.cardNumber}
+                        id="cardName"
+                        name="cardName"
+                        placeholder="Nom tel qu'il apparaît sur la carte"
+                        value={formData.cardName}
                       onChange={handleInputChange}
                       required
+                        aria-required="true"
+                        aria-label="Nom tel qu'il apparaît sur votre carte bancaire"
                     />
+                    </div>
                     <div className="card-row">
+                      <div className="form-group">
+                        <label htmlFor="cardExpiry">Date d'expiration *</label>
                       <input
                         type="text"
+                          id="cardExpiry"
                         name="cardExpiry"
                         placeholder="MM/AA"
                         value={formData.cardExpiry}
                         onChange={handleInputChange}
                         required
+                          aria-required="true"
+                          aria-label="Date d'expiration de votre carte au format MM/AA"
+                          pattern="(0[1-9]|1[0-2])\/([0-9]{2})"
+                          maxLength="5"
                       />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="cardCVC">CVC *</label>
                       <input
                         type="text"
+                          id="cardCVC"
                         name="cardCVC"
                         placeholder="CVC"
                         value={formData.cardCVC}
                         onChange={handleInputChange}
                         required
+                          aria-required="true"
+                          aria-label="Code de sécurité CVC de votre carte"
+                          pattern="[0-9]{3,4}"
+                          maxLength="4"
                       />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {formData.paymentMethod === 'paypal' && (
-                  <div className="paypal-details">
+                  <div className="paypal-details" role="group" aria-labelledby="paypal-details-legend">
+                    <div id="paypal-details-legend" className="visually-hidden">Détails PayPal</div>
+                    <div className="form-group">
+                      <label htmlFor="paypalEmail">Email PayPal *</label>
                     <input
                       type="email"
+                        id="paypalEmail"
                       name="paypalEmail"
                       placeholder="Email PayPal"
                       value={formData.paypalEmail}
                       onChange={handleInputChange}
                       required
+                        aria-required="true"
+                        aria-label="Votre adresse email PayPal"
                     />
+                    </div>
                   </div>
                 )}
-              </div>
+              </fieldset>
 
               <div className="form-actions">
                 <button
@@ -547,6 +640,7 @@ const Cart = () => {
                     setIsGuest(false);
                   }}
                   className="cancel-button"
+                  aria-label="Retour au panier"
                 >
                   Retour
                 </button>
@@ -554,15 +648,17 @@ const Cart = () => {
                   type="submit" 
                   className="submit-button"
                   disabled={isProcessingPayment || isGuestOrderLoading || isUserOrderLoading}
+                  aria-label={isProcessingPayment ? 'Traitement du paiement en cours' : 'Payer et commander'}
+                  aria-busy={isProcessingPayment}
                 >
                   {isProcessingPayment ? 'Traitement en cours...' : 'Payer et commander'}
                 </button>
               </div>
             </form>
-          </div>
+          </section>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 

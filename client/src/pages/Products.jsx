@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
 import '../styles/Products.scss';
 
 const Products = () => {
   const { data: products, isLoading, error } = useGetProductsQuery();
+  const [notification, setNotification] = useState({ show: false, message: '', productName: '' });
 
   const addToCart = (product) => {
     // Récupérer le panier actuel
@@ -32,43 +33,74 @@ const Products = () => {
     // Sauvegarder le panier mis à jour
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     
-    // Afficher une confirmation
-    alert('Produit ajouté au panier !');
+    // Afficher la notification
+    setNotification({
+      show: true,
+      message: existingItem ? 'Quantité mise à jour dans le panier' : 'Produit ajouté au panier',
+      productName: product.name
+    });
+
+    // Faire disparaître la notification après 3 secondes
+    setTimeout(() => {
+      setNotification({ show: false, message: '', productName: '' });
+    }, 3000);
   };
 
   if (isLoading) {
-    return <div className="loading">Chargement des produits...</div>;
+    return (
+      <div role="status" aria-label="Chargement des produits" className="loading">
+        Chargement des produits...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">
+    return (
+      <div role="alert" aria-label="Erreur de chargement des produits" className="error">
       {error.status === 404 ? 'Aucun produit trouvé' : 'Erreur lors du chargement des produits'}
-    </div>;
+      </div>
+    );
   }
 
   return (
-    <div className="products-container">
+    <div className="products-container" role="region" aria-label="Liste des produits">
+      {notification.show && (
+        <div 
+          role="status" 
+          aria-live="polite" 
+          className="notification"
+        >
+          <p>
+            <strong>{notification.productName}</strong> : {notification.message}
+          </p>
+        </div>
+      )}
+
       <h1>Nos Produits</h1>
-      <div className="products-grid">
+      
+      <section className="products-grid" role="list" aria-label="Grille des produits">
         {products?.map((product) => (
-          <div key={product._id} className="product-card">
-            <div className="product-image">
-              <img src={product.image} alt={product.name} />
-            </div>
+          <article key={product._id} className="product-card" role="listitem">
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="product-image"
+            />
             <div className="product-info">
-              <h3>{product.name}</h3>
+              <h2>{product.name}</h2>
               <p className="product-description">{product.description}</p>
-              <p className="product-price">{product.price.toFixed(2)} €</p>
+              <p className="product-price">{product.price}€</p>
               <button 
-                className="add-to-cart-button"
                 onClick={() => addToCart(product)}
+                className="add-to-cart-button"
+                aria-label={`Ajouter ${product.name} au panier`}
               >
                 Ajouter au panier
               </button>
             </div>
-          </div>
+          </article>
         ))}
-      </div>
+      </section>
     </div>
   );
 };

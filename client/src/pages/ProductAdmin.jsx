@@ -62,13 +62,12 @@ const ProductAdmin = () => {
 
       if (editingProduct) {
         await updateProduct({ id: editingProduct, ...productData }).unwrap();
-        setSuccessMessage('Le produit a été modifié avec succès !');
+        setSuccessMessage('Le produit a été mis à jour avec succès !');
       } else {
         await addProduct(productData).unwrap();
         setSuccessMessage('Le nouveau produit a été ajouté avec succès !');
       }
 
-      setEditingProduct(null);
       setFormData({
         name: '',
         description: '',
@@ -78,21 +77,18 @@ const ProductAdmin = () => {
         stock: '',
         trendy: false
       });
-
-      // Faire disparaître le message après 3 secondes
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      setEditingProduct(null);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde du produit:', error);
       alert('Erreur lors de la sauvegarde du produit');
     }
   };
 
-  const handleDelete = async (productId) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
       try {
-        await deleteProduct(productId).unwrap();
+        await deleteProduct(id).unwrap();
+        setSuccessMessage('Le produit a été supprimé avec succès !');
       } catch (error) {
         console.error('Erreur lors de la suppression du produit:', error);
         alert('Erreur lors de la suppression du produit');
@@ -100,43 +96,56 @@ const ProductAdmin = () => {
     }
   };
 
-  const handleToggleTrendy = async (productId, currentTrendy) => {
+  const handleTrendyToggle = async (id, currentTrendy) => {
     try {
-      await updateProductTrendy({ id: productId, trendy: !currentTrendy }).unwrap();
+      await updateProductTrendy({ id, trendy: !currentTrendy }).unwrap();
+      setSuccessMessage('Le statut "tendance" a été mis à jour avec succès !');
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du statut trendy:', error);
-      alert('Erreur lors de la mise à jour du statut trendy');
+      console.error('Erreur lors de la mise à jour du statut "tendance":', error);
+      alert('Erreur lors de la mise à jour du statut "tendance"');
     }
   };
 
   if (isLoading) {
-    return <div className="loading">Chargement...</div>;
+    return (
+      <div role="status" aria-label="Chargement des produits" className="loading">
+        Chargement des produits...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error">Erreur: {error.message || 'Une erreur est survenue'}</div>;
+    return (
+      <div role="alert" aria-label="Erreur de chargement des produits" className="error">
+        Erreur lors du chargement des produits
+      </div>
+    );
   }
 
   return (
-    <div className="product-admin">
-      <div className="admin-header">
+    <div className="product-admin-container" role="region" aria-label="Gestion des produits">
+      <header className="admin-header">
         <h1>Gestion des Produits</h1>
-        <button onClick={() => navigate('/dashboard-admin')} className="back-button">
+        <button 
+          onClick={() => navigate('/dashboard-admin')} 
+          className="back-button"
+          aria-label="Retour au tableau de bord administrateur"
+        >
           Retour au dashboard
         </button>
-      </div>
+      </header>
 
       {successMessage && (
-        <div className="success-message">
+        <div role="status" aria-live="polite" className="success-message">
           {successMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="product-form">
-        <h2>{editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}</h2>
-        
+      <section className="product-form-section" aria-labelledby="product-form-heading">
+        <h2 id="product-form-heading">{editingProduct ? 'Modifier le Produit' : 'Ajouter un Nouveau Produit'}</h2>
+        <form onSubmit={handleSubmit} className="product-form" aria-label="Formulaire de produit">
         <div className="form-group">
-          <label htmlFor="name">Nom</label>
+            <label htmlFor="name">Nom du produit</label>
           <input
             type="text"
             id="name"
@@ -144,6 +153,7 @@ const ProductAdmin = () => {
             value={formData.name}
             onChange={handleInputChange}
             required
+              aria-required="true"
           />
         </div>
 
@@ -155,6 +165,7 @@ const ProductAdmin = () => {
             value={formData.description}
             onChange={handleInputChange}
             required
+              aria-required="true"
           />
         </div>
 
@@ -169,6 +180,7 @@ const ProductAdmin = () => {
             required
             min="0"
             step="0.01"
+              aria-required="true"
           />
         </div>
 
@@ -180,6 +192,7 @@ const ProductAdmin = () => {
             value={formData.category}
             onChange={handleInputChange}
             required
+              aria-required="true"
           >
             <option value="">Sélectionner une catégorie</option>
             <option value="Yoga">Yoga</option>
@@ -193,12 +206,13 @@ const ProductAdmin = () => {
         <div className="form-group">
           <label htmlFor="image">URL de l'image</label>
           <input
-            type="url"
+              type="text"
             id="image"
             name="image"
             value={formData.image}
             onChange={handleInputChange}
             required
+              aria-required="true"
           />
         </div>
 
@@ -212,13 +226,15 @@ const ProductAdmin = () => {
             onChange={handleInputChange}
             required
             min="0"
+              aria-required="true"
           />
         </div>
 
         <div className="form-group checkbox">
-          <label>
+            <label htmlFor="trendy">
             <input
               type="checkbox"
+                id="trendy"
               name="trendy"
               checked={formData.trendy}
               onChange={handleInputChange}
@@ -228,7 +244,7 @@ const ProductAdmin = () => {
         </div>
 
         <div className="form-buttons">
-          <button type="submit" className="save-button">
+            <button type="submit" className="submit-button" aria-label={editingProduct ? "Mettre à jour le produit" : "Ajouter le produit"}>
             {editingProduct ? 'Mettre à jour' : 'Ajouter'}
           </button>
           {editingProduct && (
@@ -247,70 +263,55 @@ const ProductAdmin = () => {
                   trendy: false
                 });
               }}
+                aria-label="Annuler la modification"
             >
               Annuler
             </button>
           )}
         </div>
       </form>
+      </section>
 
-      <div className="products-list">
-        <h2>Liste des Produits</h2>
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Nom</th>
-                <th>Prix</th>
-                <th>Stock</th>
-                <th>Catégorie</th>
-                <th>Trendy</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products?.map(product => (
-                <tr key={product._id}>
-                  <td>
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="product-thumbnail"
-                    />
-                  </td>
-                  <td>{product.name}</td>
-                  <td>{product.price}€</td>
-                  <td>{product.stock}</td>
-                  <td>{product.category}</td>
-                  <td>
-                    <button 
-                      onClick={() => handleToggleTrendy(product._id, product.trendy)}
-                      className={`trendy-button ${product.trendy ? 'active' : ''}`}
-                    >
-                      {product.trendy ? 'Trendy' : 'Non trendy'}
-                    </button>
-                  </td>
-                  <td className="action-buttons">
+      <section className="products-list-section" aria-labelledby="products-list-heading">
+        <h2 id="products-list-heading">Liste des Produits</h2>
+        <div className="products-list" role="list">
+          {products?.map((product) => (
+            <article key={product._id} className="product-item" role="listitem">
+              <img src={product.image} alt={product.name} className="product-image" />
+              <div className="product-details">
+                <h3>{product.name}</h3>
+                <p>{product.description}</p>
+                <p>Prix: {product.price}€</p>
+                <p>Stock: {product.stock}</p>
+                <p>Catégorie: {product.category}</p>
+                <div className="product-actions">
                     <button 
                       onClick={() => handleEdit(product)}
                       className="edit-button"
+                    aria-label={`Modifier ${product.name}`}
                     >
                       Modifier
                     </button>
                     <button 
                       onClick={() => handleDelete(product._id)}
                       className="delete-button"
+                    aria-label={`Supprimer ${product.name}`}
                     >
                       Supprimer
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <button
+                    onClick={() => handleTrendyToggle(product._id, product.trendy)}
+                    className={`trendy-button ${product.trendy ? 'active' : ''}`}
+                    aria-label={`${product.trendy ? 'Retirer' : 'Ajouter'} ${product.name} des produits tendance`}
+                  >
+                    {product.trendy ? 'Tendance' : 'Non tendance'}
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -5,6 +5,7 @@ import '../styles/Login.scss';
 
 const Register = () => {
   const navigate = useNavigate();
+  const [register, { isLoading }] = useRegisterMutation();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -12,8 +13,6 @@ const Register = () => {
     role: 'user'
   });
   const [error, setError] = useState('');
-
-  const [register, { isLoading }] = useRegisterMutation();
 
   const handleChange = (e) => {
     setFormData({
@@ -73,11 +72,17 @@ const Register = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-form-container">
-        <h1>Inscription</h1>
-        {error && <p className="error-message">{error}</p>}
-        <form onSubmit={handleSubmit}>
+    <div className="login-container" role="region" aria-label="Page d'inscription">
+      <section className="login-form-container" aria-labelledby="register-heading">
+        <h1 id="register-heading">Inscription</h1>
+        
+        {error && (
+          <div role="alert" aria-live="assertive" className="error-message">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="register-form" aria-label="Formulaire d'inscription">
           <div className="form-group">
             <label htmlFor="username">Nom d'utilisateur</label>
             <input
@@ -89,8 +94,11 @@ const Register = () => {
               required
               minLength="3"
               placeholder="Entrez votre nom d'utilisateur"
+              aria-required="true"
+              aria-label="Votre nom d'utilisateur"
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -101,8 +109,11 @@ const Register = () => {
               onChange={handleChange}
               required
               placeholder="exemple@email.com"
+              aria-required="true"
+              aria-label="Votre adresse email"
             />
           </div>
+
           <div className="form-group">
             <label htmlFor="password">Mot de passe</label>
             <input
@@ -114,22 +125,33 @@ const Register = () => {
               required
               minLength="6"
               placeholder="Minimum 6 caractères"
+              aria-required="true"
+              aria-label="Votre mot de passe"
             />
           </div>
-          <button type="submit" disabled={isLoading} className="login-button">
+
+          <button 
+            type="submit" 
+            className="login-button"
+            disabled={isLoading}
+            aria-label={isLoading ? "Inscription en cours..." : "S'inscrire"}
+            aria-busy={isLoading}
+          >
             {isLoading ? 'Inscription en cours...' : 'S\'inscrire'}
           </button>
-          <div className="register-link">
+
+          <nav className="register-link" aria-label="Navigation après inscription">
             <p>Déjà un compte ?</p>
             <button 
               onClick={() => navigate('/login')} 
               className="register-button"
+              aria-label="Aller à la page de connexion"
             >
               Se connecter
             </button>
-          </div>
+          </nav>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

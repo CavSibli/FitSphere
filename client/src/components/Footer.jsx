@@ -14,60 +14,73 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="footer">
+    <footer className="footer" role="contentinfo" aria-label="Pied de page FitSphere">
       <div className="footer-content">
-        <div className="footer-section">
-          <h4>Nos Partenaires</h4>
-          <div className="partners-grid">
+        <section className="footer-section" aria-labelledby="partners-heading">
+          <h4 id="partners-heading">Nos Partenaires</h4>
+          <div className="partners-grid" role="list" aria-label="Liste des partenaires">
             {partners.map((partner, index) => (
-              <div key={index} className="partner-item">
-                <span className="partner-logo">{partner.logo}</span>
+              <div key={index} className="partner-item" role="listitem">
+                <span className="partner-logo" aria-hidden="true">{partner.logo}</span>
                 <span className="partner-name">{partner.name}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="footer-section">
-          <h4>Nous Contacter</h4>
-          <ul className="contact-info">
-            <li>
-              <i className="fas fa-envelope"></i>
-              <span>contact@fitsphere.com</span>
-            </li>
-            <li>
-              <i className="fas fa-phone"></i>
-              <span>+33 1 23 45 67 89</span>
-            </li>
-          </ul>
-          <div className="social-links">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-              <FaFacebook />
-            </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-              <FaTwitter />
-            </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-              <FaInstagram />
-            </a>
-          </div>
-        </div>
+        <section className="footer-section" aria-labelledby="contact-heading">
+          <h4 id="contact-heading">Nous Contacter</h4>
+          <address>
+            <ul className="contact-info" role="list" aria-label="Informations de contact">
+              <li>
+                <i className="fas fa-envelope" aria-hidden="true"></i>
+                <a href="mailto:contact@fitsphere.com" aria-label="Envoyer un email à FitSphere">contact@fitsphere.com</a>
+              </li>
+              <li>
+                <i className="fas fa-phone" aria-hidden="true"></i>
+                <a href="tel:+33123456789" aria-label="Appeler FitSphere">+33 1 23 45 67 89</a>
+              </li>
+            </ul>
+          </address>
+          <nav className="social-links" aria-label="Réseaux sociaux">
+            <ul role="list">
+              <li>
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Visiter notre page Facebook">
+                  <FaFacebook aria-hidden="true" />
+                  <span className="social-text">Notre Facebook</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Visiter notre compte Twitter">
+                  <FaTwitter aria-hidden="true" />
+                  <span className="social-text">Notre Twitter</span>
+                </a>
+              </li>
+              <li>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Visiter notre compte Instagram">
+                  <FaInstagram aria-hidden="true" />
+                  <span className="social-text">Notre Instagram</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </section>
 
-        <div className="footer-section">
-          <h4>Informations Légales</h4>
-          <ul>
+        <nav className="footer-section" aria-labelledby="legal-heading">
+          <h4 id="legal-heading">Informations Légales</h4>
+          <ul role="list" aria-label="Liens vers les informations légales">
             <li><Link to="/coming-soon">Mentions légales</Link></li>
             <li><Link to="/coming-soon">Politique de confidentialité</Link></li>
             <li><Link to="/coming-soon">CGV</Link></li>
             <li><Link to="/coming-soon">Politique des cookies</Link></li>
           </ul>
-        </div>
+        </nav>
       </div>
 
-      <div className="footer-bottom">
+      <div className="footer-bottom" role="contentinfo" aria-label="Informations légales du site">
         <p>&copy; {currentYear} FitSphere - Tous droits réservés</p>
         <p>SIRET : 123 456 789 00000 | RCS Paris B 123 456 789</p>
-      </div>
+    </div>
     </footer>
   );
 };

@@ -1,3 +1,29 @@
+// Import des polices
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/font/Lato/Lato-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/font/Lato/Lato-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/font/Lato/Lato-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
 // Reset et styles de base
 * {
   margin: 0;
@@ -17,6 +43,13 @@ body {
   background-color: $background-color;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+// Styles de base pour les titres
+h1, h2, h3, h4, h5, h6 {
+  font-family: $font-family-heading;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 // Styles de base pour les liens
@@ -116,10 +149,16 @@ h1 {
 // Classes de typographie
 h1 {
   @include heading-1;
+  font-family: $font-family-heading;
 }
 
 h2 {
   @include heading-2;
+  font-family: $font-family-heading;
+}
+
+p, span, a, button, input, textarea, select {
+  font-family: $font-family-base;
 }
 
 // Classes de boutons

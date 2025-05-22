@@ -13,88 +13,112 @@ const GuestOrderDetails = () => {
     error
   } = useGetGuestOrderDetailsQuery(id);
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (error) return <div className="error-message">
-    {error.status === 404 ? 'Commande non trouvée' : 'Erreur lors du chargement des détails de la commande'}
-  </div>;
-  if (!order) return <div>Aucune commande trouvée</div>;
+  if (isLoading) {
+    return (
+      <div role="status" aria-label="Chargement des détails de la commande" className="flex justify-center items-center h-screen">
+        Chargement...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="error-message" role="alert" aria-label="Message d'erreur">
+        {error.status === 404 ? 'Commande non trouvée' : 'Erreur lors du chargement des détails de la commande'}
+      </section>
+    );
+  }
+
+  if (!order) {
+    return (
+      <section className="error-message" role="alert" aria-label="Aucune commande trouvée">
+        Aucune commande trouvée
+      </section>
+    );
+  }
 
   return (
-    <div className="order-details">
-      <div className="order-header">
-        <h1>Détails de la commande #{order.orderNumber || order._id}</h1>
-        <button className="back-button" onClick={() => navigate('/admin')}>
-          Retour au dashboard
+    <section className="order-details" aria-labelledby="order-heading">
+      <header className="order-header">
+        <h1 id="order-heading">Détails de la commande #{order.orderNumber || order._id}</h1>
+        <button 
+          className="back-button" 
+          onClick={() => navigate('/')}
+          aria-label="Retour à la page d'accueil"
+        >
+          Retour au site
         </button>
-      </div>
+      </header>
 
       <div className="order-content">
-        <div className="order-section">
-          <h2>Informations client</h2>
-          <div className="info-grid">
-            <div className="info-item">
+        <section className="order-section" aria-labelledby="customer-info-heading">
+          <h2 id="customer-info-heading">Informations client</h2>
+          <div className="info-grid" role="list" aria-label="Informations du client">
+            <div className="info-item" role="listitem">
               <strong>Email:</strong>
               <span>{order.guestInfo?.email}</span>
             </div>
-            <div className="info-item">
+            <div className="info-item" role="listitem">
               <strong>Nom:</strong>
               <span>{order.guestInfo?.name}</span>
             </div>
-            <div className="info-item">
+            <div className="info-item" role="listitem">
               <strong>Date de commande:</strong>
               <span>{new Date(order.createdAt).toLocaleDateString()}</span>
             </div>
-            <div className="info-item">
+            <div className="info-item" role="listitem">
               <strong>Statut:</strong>
-              <span className={`status ${order.status}`}>{order.status}</span>
+              <span className={`status ${order.status}`} role="status" aria-label={`Statut de la commande: ${order.status}`}>
+                {order.status}
+              </span>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="order-section">
-          <h2>Adresse de livraison</h2>
-          <div className="address-info">
+        <section className="order-section" aria-labelledby="shipping-address-heading">
+          <h2 id="shipping-address-heading">Adresse de livraison</h2>
+          <address className="address-info">
             <p>{order.shippingAddress?.street}</p>
             <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
             <p>{order.shippingAddress?.country}</p>
-          </div>
-        </div>
+          </address>
+        </section>
 
-        <div className="order-section">
-          <h2>Articles commandés</h2>
-          <div className="items-list">
+        <section className="order-section" aria-labelledby="ordered-items-heading">
+          <h2 id="ordered-items-heading">Articles commandés</h2>
+          <div className="items-list" role="list" aria-label="Liste des articles commandés">
             {order.products?.map((item, index) => (
-              <div key={index} className="order-item">
+              <article key={index} className="order-item" role="listitem">
                 <div className="item-details">
                   <h3>{item.product.name}</h3>
                   <p>Quantité: {item.quantity}</p>
                   <p>Prix unitaire: {item.price}€</p>
                   <p>Total: {item.quantity * item.price}€</p>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="order-section">
-          <h2>Résumé de la commande</h2>
-          <div className="order-summary">
-            <div className="summary-item">
+        <section className="order-section" aria-labelledby="order-summary-heading">
+          <h2 id="order-summary-heading">Résumé de la commande</h2>
+          <div className="order-summary" role="list" aria-label="Résumé des montants">
+            <div className="summary-item" role="listitem">
               <span>Sous-total:</span>
               <span>{order.totalAmount}€</span>
             </div>
-            <div className="summary-item">
+            <div className="summary-item" role="listitem">
               <span>Frais de livraison:</span>
               <span>Gratuit</span>
             </div>
-            <div className="summary-item total">
+            <div className="summary-item total" role="listitem">
               <span>Total:</span>
               <span>{order.totalAmount}€</span>
             </div>
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </section>
   );
 };
 

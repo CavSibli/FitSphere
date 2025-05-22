@@ -1,14 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-// Récupérer les données initiales du localStorage
-const token = localStorage.getItem('token');
-const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
-
 const initialState = {
-  user: user,
-  token: token,
-  isAuthenticated: !!token,
+  user: null,
+  token: localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('token'),
+  redirectTo: null
 };
 
 const authSlice = createSlice({
@@ -16,34 +13,69 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
+      // Nettoyer l'état avant de définir les nouvelles credentials
+      state.user = null;
+      state.token = null;
+      state.isAuthenticated = false;
+      state.redirectTo = null;
+
+      // Définir les nouvelles credentials
       const { user, token } = action.payload;
       state.user = user;
       state.token = token;
       state.isAuthenticated = true;
-      // Sauvegarder dans localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Définir la redirection en fonction du rôle
+      if (user.role === 'admin') {
+        state.redirectTo = '/dashboard-admin';
+      } else if (user.role === 'user') {
+        state.redirectTo = '/dashboard-user';
+      }
     },
     logout: (state) => {
+      // Nettoyer complètement l'état
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
-      // Nettoyer localStorage
+      state.redirectTo = null;
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
     },
-  },
+    clearRedirect: (state) => {
+      state.redirectTo = null;
+    },
+    initializeAuth: (state) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        state.token = token;
+        state.isAuthenticated = true;
+      } else {
+        // Si pas de token, s'assurer que l'état est vide
+        state.user = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        state.redirectTo = null;
+      }
+    }
+  }
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, logout, clearRedirect, initializeAuth } = authSlice.actions;
+
 export default authSlice.reducer;
+
+// Sélecteurs
+export const selectCurrentUser = (state) => state.auth.user;
+export const selectCurrentToken = (state) => state.auth.token;
+export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
+export const selectRedirectTo = (state) => state.auth.redirectTo;
 
 export const authApiSlice = createApi({
   reducerPath: 'authApi',
   baseQuery: fetchBaseQuery({ 
     baseUrl: 'http://localhost:5000/api',
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem('token');
+    prepareHeaders: (headers, { getState }) => {
+      const token = getState().auth.token;
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }

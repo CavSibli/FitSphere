@@ -1,182 +1,245 @@
 @use "./_variables" as *;
 @use "./mixins" as *;
 
-.product-admin {
-  padding: $spacing-lg 0;
-  @include container;
-  
+.product-admin-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 
   .admin-header {
-    @include flex-between;
-    flex-wrap: wrap;
-    gap: $spacing-md;
-    margin-bottom: $spacing-lg;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
 
     h1 {
-      font-size: $font-size-xl;
-      font-weight: bold;
-      color: $text-color;
+      color: #333;
+      margin: 0;
     }
 
     .back-button {
-      @include button-primary;
-      padding: $spacing-sm $spacing-md;
-      border-radius: $border-radius;
+      background-color: #6c757d;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #5a6268;
+      }
+    }
     }
   }
 
   .success-message {
-    background-color: color.adjust($primary-color, $lightness: 40%);
-    color: $text-color;
-    padding: $spacing-sm $spacing-md;
-    border-radius: $border-radius;
-    margin-bottom: $spacing-md;
+  background-color: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  text-align: center;
   }
 
-  .product-form {
-    background-color: $background-color;
-    padding: $spacing-md;
-    border-radius: $border-radius;
+.product-form-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: $spacing-lg;
+  margin-bottom: 2rem;
 
     h2 {
-      font-size: $font-size-lg;
-      margin-bottom: $spacing-md;
-      color: $text-color;
-    }
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 
     .form-group {
-      margin-bottom: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 
       label {
-        display: block;
-        margin-bottom: $spacing-xs;
-        font-weight: bold;
-        color: $text-color;
+      font-weight: 500;
+      color: #555;
       }
 
       input,
       textarea,
       select {
-        width: 100%;
-        padding: $spacing-sm;
-        border: 1px solid $secondary-color;
-        border-radius: $border-radius;
-        font-size: $font-size-md;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+      }
+    }
+
+    select {
         background-color: white;
-        color: $text-color;
+      cursor: pointer;
+    }
+
+    textarea {
+      min-height: 100px;
+      resize: vertical;
       }
 
       &.checkbox {
-        display: flex;
+      flex-direction: row;
         align-items: center;
+      gap: 0.5rem;
 
         label {
           display: flex;
           align-items: center;
-          gap: $spacing-xs;
-          font-weight: normal;
+        gap: 0.5rem;
+        cursor: pointer;
+      }
+
+      input[type="checkbox"] {
+        width: 1.2rem;
+        height: 1.2rem;
         }
       }
     }
 
     .form-buttons {
       display: flex;
-      gap: $spacing-sm;
+    gap: 1rem;
+    margin-top: 1rem;
 
-      .save-button {
-        @include button-primary;
-        padding: $spacing-sm $spacing-md;
-        border-radius: $border-radius;
+    .submit-button {
+      background-color: #007bff;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #0056b3;
+      }
       }
 
       .cancel-button {
-        @include button-base;
-        background-color: color.adjust($secondary-color, $lightness: 20%);
+      background-color: #6c757d;
         color: white;
-        padding: $spacing-sm $spacing-md;
-        border-radius: $border-radius;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
 
         &:hover {
-          background-color: color.adjust($secondary-color, $lightness: 10%);
-        }
+        background-color: #5a6268;
       }
+    }
+  }
+}
+
+.products-list-section {
+  h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
     }
   }
 
   .products-list {
-    h2 {
-      font-size: $font-size-lg;
-      margin-bottom: $spacing-md;
-      color: $text-color;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.product-item {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  .product-image {
+        width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .product-details {
+    padding: 1.5rem;
+
+    h3 {
+      color: #333;
+      margin-bottom: 0.5rem;
     }
 
-    .table-container {
-      overflow-x: auto;
+    p {
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+  }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
+  .product-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
 
-        th,
-        td {
-          padding: $spacing-sm;
-          text-align: left;
-          border-bottom: 1px solid #ddd;
-          font-size: $font-size-sm;
-        }
+    button {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
 
-        th {
-          background-color: $secondary-color;
-          color: white;
-        }
-
-        .product-thumbnail {
-          width: 50px;
-          height: 50px;
-          object-fit: cover;
-          border-radius: $border-radius;
-        }
-
-        .trendy-button {
-          @include button-base;
-          padding: $spacing-xs $spacing-sm;
-          border-radius: $border-radius;
-          font-size: $font-size-sm;
-          background-color: color.adjust($secondary-color, $lightness: 20%);
+      &.edit-button {
+        background-color: #28a745;
           color: white;
 
-          &.active {
-            background-color: $primary-color;
-          }
+        &:hover {
+          background-color: #218838;
+        }
+      }
+
+      &.delete-button {
+        background-color: #dc3545;
+          color: white;
 
           &:hover {
-            background-color: color.adjust($secondary-color, $lightness: 10%);
+          background-color: #c82333;
           }
         }
 
-        .action-buttons {
-          display: flex;
-          gap: $spacing-xs;
-
-          .edit-button {
-            @include button-primary;
-            padding: $spacing-xs $spacing-sm;
-            border-radius: $border-radius;
-            font-size: $font-size-sm;
-          }
-
-          .delete-button {
-            @include button-base;
-            background-color: color.adjust($secondary-color, $lightness: 20%);
+      &.trendy-button {
+        background-color: #6c757d;
             color: white;
-            padding: $spacing-xs $spacing-sm;
-            border-radius: $border-radius;
-            font-size: $font-size-sm;
 
             &:hover {
-              background-color: color.adjust($secondary-color, $lightness: 10%);
+          background-color: #5a6268;
+        }
+
+        &.active {
+          background-color: #17a2b8;
+
+          &:hover {
+            background-color: #138496;
             }
           }
         }
@@ -184,12 +247,58 @@
     }
   }
 
-  .loading,
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
   .error {
     text-align: center;
-    font-size: $font-size-md;
-    color: $text-color;
-    margin-top: $spacing-lg;
+  padding: 2rem;
+  color: #dc3545;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+@media (max-width: 768px) {
+  .product-admin-container {
+    padding: 1rem;
+
+    .admin-header {
+      flex-direction: column;
+      gap: 1rem;
+      text-align: center;
+
+      .back-button {
+        width: 100%;
+      }
+    }
+  }
+
+  .product-form-section {
+    padding: 1rem;
+  }
+
+  .products-list {
+    grid-template-columns: 1fr;
+  }
+
+  .product-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .form-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
   }
 }
 

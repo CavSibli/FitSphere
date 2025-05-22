@@ -68,58 +68,65 @@ const EditProduct = () => {
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+    return <div role="status" aria-label="Chargement du produit" className="flex justify-center items-center h-screen">Chargement...</div>;
   }
 
   if (fetchError) {
     return (
-      <div className="max-w-2xl mx-auto p-4">
+      <section className="max-w-2xl mx-auto p-4" role="alert" aria-label="Erreur de chargement">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
           Erreur lors de la récupération du produit
         </div>
-      </div>
+      </section>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Modifier le produit</h1>
+    <section className="max-w-2xl mx-auto p-4" aria-labelledby="edit-product-heading">
+      <h1 id="edit-product-heading" className="text-2xl font-bold mb-4">Modifier le produit</h1>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div role="alert" aria-label="Message d'erreur" className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Nom</label>
+      <form onSubmit={handleSubmit} className="space-y-4" aria-label="Formulaire de modification du produit">
+        <div className="form-group">
+          <label htmlFor="product-name" className="block text-sm font-medium text-gray-700">Nom</label>
           <input
             type="text"
+            id="product-name"
             name="name"
             value={product.name}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="Nom du produit"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Description</label>
+        <div className="form-group">
+          <label htmlFor="product-description" className="block text-sm font-medium text-gray-700">Description</label>
           <textarea
+            id="product-description"
             name="description"
             value={product.description}
             onChange={handleChange}
             rows="3"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="Description du produit"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Prix</label>
+        <div className="form-group">
+          <label htmlFor="product-price" className="block text-sm font-medium text-gray-700">Prix</label>
           <input
             type="number"
+            id="product-price"
             name="price"
             value={product.price}
             onChange={handleChange}
@@ -127,42 +134,53 @@ const EditProduct = () => {
             min="0"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="Prix du produit en euros"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Stock</label>
+        <div className="form-group">
+          <label htmlFor="product-stock" className="block text-sm font-medium text-gray-700">Stock</label>
           <input
             type="number"
+            id="product-stock"
             name="stock"
             value={product.stock}
             onChange={handleChange}
             min="0"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="Quantité en stock"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Image URL</label>
+        <div className="form-group">
+          <label htmlFor="product-image" className="block text-sm font-medium text-gray-700">Image URL</label>
           <input
             type="url"
+            id="product-image"
             name="image"
             value={product.image}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="URL de l'image du produit"
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Catégorie</label>
+        <div className="form-group">
+          <label htmlFor="product-category" className="block text-sm font-medium text-gray-700">Catégorie</label>
           <select
+            id="product-category"
             name="category"
             value={product.category}
             onChange={handleChange}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
+            aria-required="true"
+            aria-label="Catégorie du produit"
           >
             <option value="">Sélectionner une catégorie</option>
             <option value="Yoga">Yoga</option>
@@ -173,11 +191,12 @@ const EditProduct = () => {
           </select>
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4" role="group" aria-label="Actions du formulaire">
           <button
             type="button"
             onClick={() => navigate('/admin/products')}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            aria-label="Annuler la modification"
           >
             Annuler
           </button>
@@ -185,12 +204,14 @@ const EditProduct = () => {
             type="submit"
             disabled={isUpdating}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+            aria-label={isUpdating ? "Enregistrement en cours" : "Enregistrer les modifications"}
+            aria-busy={isUpdating}
           >
             {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 };
 

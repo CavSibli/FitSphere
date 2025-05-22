@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Navbar from './components/Navbar';
@@ -13,9 +13,10 @@ import Cart from './pages/Cart';
 import ProductAdmin from './pages/ProductAdmin';
 import GuestOrderDetails from './pages/GuestOrderDetails';
 import EditProduct from './pages/EditProduct';
-import AddProduct from './pages/AddProduct';
 import ComingSoon from './pages/ComingSoon';
 import '@styles/app.scss';
+import { useSelector, useDispatch } from 'react-redux';
+import { initializeAuth, setCredentials, useGetUserProfileQuery } from './app/features/auth/authSlice';
 
 // Configuration de React Query
 const queryClient = new QueryClient({
@@ -31,26 +32,54 @@ const queryClient = new QueryClient({
 
 // Composant pour protéger les routes
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('token');
+  const { user, token, isAuthenticated } = useSelector((state) => state.auth);
 
-  if (!token || !user) {
-    return <Navigate to="/login" />;
+  // Si non authentifié, rediriger vers login
+  if (!isAuthenticated || !token || !user) {
+    return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" />;
+  // Vérifier le rôle et rediriger immédiatement si nécessaire
+  if (user.role === 'admin' && !allowedRoles.includes('admin')) {
+    return <Navigate to="/dashboard-admin" replace />;
+  }
+  
+  if (user.role === 'user' && !allowedRoles.includes('user')) {
+    return <Navigate to="/dashboard-user" replace />;
+  }
+
+  // Si le rôle n'est pas dans les rôles autorisés, rediriger vers la page d'accueil
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
 };
 
-function App() {
+const App = () => {
+  const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
+  const { data: userProfile, isLoading } = useGetUserProfileQuery(undefined, {
+    skip: !token
+  });
+
+  useEffect(() => {
+    // Initialiser l'état d'authentification au chargement
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  useEffect(() => {
+    // Si nous avons un token et un profil utilisateur, mettre à jour les credentials
+    if (token && userProfile && !isLoading) {
+      dispatch(setCredentials({ user: userProfile, token }));
+    }
+  }, [token, userProfile, isLoading, dispatch]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="app">
-            <Navbar />
+          <Navbar />
           <main className="main-content">
             <Routes>
               {/* Routes publiques */}
@@ -67,7 +96,7 @@ function App() {
               <Route 
                 path="/dashboard-user" 
                 element={
-                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <ProtectedRoute allowedRoles={['user']}>
                     <DashboardUser />
                   </ProtectedRoute>
                 } 
@@ -98,14 +127,6 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/add-product" 
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AddProduct />
-                  </ProtectedRoute>
-                } 
-              />
             </Routes>
           </main>
           <footer>
@@ -115,6 +136,6 @@ function App() {
       </Router>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
