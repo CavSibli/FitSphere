@@ -7,7 +7,6 @@ import '../styles/Home.scss';
 const Home = () => {
   const { data: products, isLoading, error } = useGetProductsQuery();
   const [notification, setNotification] = useState({ show: false, message: '', productName: '' });
-  
   const trendyProducts = products?.filter(product => product.trendy) || [];
 
   const addToCart = (product) => {
@@ -47,7 +46,7 @@ const Home = () => {
       console.error('Error adding product to cart:', error);
     }
   };
-
+  
   if (isLoading) return (
     <div role="status" aria-label="Chargement des produits" className="loading">
       Chargement des produits...

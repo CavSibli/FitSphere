@@ -20,7 +20,7 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
   try {
     const sanitizedBody = sanitize(req.body);
-    const { username, email, password, role } = sanitizedBody;
+    const { username, email, password} = sanitizedBody;
 
     // Vérifier si l'utilisateur existe déjà par email
     const userExistsByEmail = await User.findOne({ email });
@@ -39,7 +39,7 @@ exports.register = async (req, res) => {
       username,
       email,
       password,
-      role: role || 'user',
+      role:'user',
     });
 
     // Générer le token

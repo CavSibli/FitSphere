@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetUserProfileQuery } from '../app/features/auth/authApiSlice';
+import { useGetUserProfileQuery } from '../app/features/auth/authSlice';
 import { useGetUserOrdersQuery } from '../app/features/orders/userOrdersApiSlice';
 import { useGetProductsQuery } from '../app/features/products/productsApiSlice';
 import { useSelector, useDispatch } from 'react-redux';
@@ -57,7 +57,7 @@ const DashboardUser = () => {
     window.location.href = '/login';
   };
 
-  const getStatusLabel = (status) => {
+  const getStatusLabel = useMemo(() => {
     const statusMap = {
       pending: 'En attente',
       processing: 'En cours de traitement',
@@ -65,10 +65,10 @@ const DashboardUser = () => {
       delivered: 'Livrée',
       cancelled: 'Annulée'
     };
-    return statusMap[status] || status;
-  };
+    return (status) => statusMap[status] || status;
+  }, []);
 
-  const getStatusClass = (status) => {
+  const getStatusClass = useMemo(() => {
     const statusClassMap = {
       pending: 'status-pending',
       processing: 'status-processing',
@@ -76,13 +76,15 @@ const DashboardUser = () => {
       delivered: 'status-delivered',
       cancelled: 'status-cancelled'
     };
-    return statusClassMap[status] || '';
-  };
+    return (status) => statusClassMap[status] || '';
+  }, []);
 
-  const getProductName = (productId) => {
-    const product = products.find(p => p._id === productId);
-    return product ? product.name : 'Produit non trouvé';
-  };
+  const getProductName = useMemo(() => {
+    return (productId) => {
+      const product = products.find(p => p._id === productId);
+      return product ? product.name : 'Produit non trouvé';
+    };
+  }, [products]);
 
   if (!isAuthenticated) {
     return (
@@ -132,11 +134,11 @@ const DashboardUser = () => {
             <div role="listitem">
               <dt className="font-medium">Email:</dt>
               <dd>{userProfile.email}</dd>
-          </div>
+            </div>
             <div role="listitem">
               <dt className="font-medium">Rôle:</dt>
               <dd>{userProfile.role}</dd>
-        </div>
+            </div>
           </dl>
         </section>
       )}
@@ -171,8 +173,8 @@ const DashboardUser = () => {
                       <dt>Statut du paiement:</dt>
                       <dd>
                         {order.payment?.status === 'pending' ? 'En attente' : 
-                                         order.payment?.status === 'completed' ? 'Payé' :
-                                         order.payment?.status === 'failed' ? 'Échoué' :
+                         order.payment?.status === 'completed' ? 'Payé' :
+                         order.payment?.status === 'failed' ? 'Échoué' :
                          order.payment?.status === 'refunded' ? 'Remboursé' : 'N/A'}
                       </dd>
                     </dl>
@@ -185,7 +187,7 @@ const DashboardUser = () => {
                         return (
                           <li key={index} role="listitem">
                             REF: {productId} - {getProductName(productId)} - Quantité: {item.quantity} - Prix: {item.price?.toFixed(2)} €
-                        </li>
+                          </li>
                         );
                       })}
                     </ul>
@@ -194,9 +196,9 @@ const DashboardUser = () => {
                     <div className="shipping-address" role="group" aria-label="Adresse de livraison">
                       <h4>Adresse de livraison:</h4>
                       <address>
-                      <p>{order.shippingAddress?.street}</p>
-                      <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
-                      <p>{order.shippingAddress?.country}</p>
+                        <p>{order.shippingAddress?.street}</p>
+                        <p>{order.shippingAddress?.city}, {order.shippingAddress?.postalCode}</p>
+                        <p>{order.shippingAddress?.country}</p>
                       </address>
                     </div>
                   </div>
@@ -214,10 +216,10 @@ const DashboardUser = () => {
           aria-label="Erreur lors du chargement des commandes"
         >
           Erreur lors du chargement des commandes
-      </div>
+        </div>
       )}
     </div>
   );
 };
 
-export default DashboardUser; 
+export default React.memo(DashboardUser); 

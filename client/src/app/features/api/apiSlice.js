@@ -1,9 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
+
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({ 
-    baseUrl: 'http://localhost:5000/api',
+    baseUrl: `${import.meta.env.VITE_API_URL}`,
     prepareHeaders: (headers) => {
       const token = localStorage.getItem('token');
       if (token) {
@@ -12,6 +13,6 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Products', 'Orders', 'GuestOrders', 'Users', 'Profile', 'Stats'],
+  tagTypes: ['Products', 'Orders', 'GuestOrders', 'Users', 'Profile', 'Stats', 'UserOrders'],
   endpoints: () => ({}),
 }); 

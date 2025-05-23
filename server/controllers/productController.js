@@ -89,10 +89,16 @@ exports.updateTrendyStatus = async (req, res) => {
 // Supprimer un produit
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
+    // Sanitization de l'ID
+    const sanitizedId = sanitize(req.params.id);
+    
+    // Utilisation de deleteOne au lieu de findByIdAndDelete pour de meilleures performances
+    const result = await Product.deleteOne({ _id: sanitizedId });
+    
+    if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'Produit non trouvé' });
     }
+    
     res.status(200).json({ message: 'Produit supprimé avec succès' });
   } catch (error) {
     res.status(500).json({ message: 'Erreur lors de la suppression du produit', error: error.message });

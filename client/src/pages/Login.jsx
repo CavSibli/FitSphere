@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useLoginMutation } from '../app/features/auth/authApiSlice';
+import { useLoginMutation } from '../app/features/auth/authSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCredentials } from '../app/features/auth/authSlice';
 import '../styles/Login.scss';

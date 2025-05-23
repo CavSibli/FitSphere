@@ -18,6 +18,7 @@ export const usersApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: ['Users'],
     }),
   }),
+  overrideExisting: true,
 });
 
 export const {

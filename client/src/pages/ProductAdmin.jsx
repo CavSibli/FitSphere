@@ -85,14 +85,18 @@ const ProductAdmin = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-      try {
-        await deleteProduct(id).unwrap();
-        setSuccessMessage('Le produit a été supprimé avec succès !');
-      } catch (error) {
-        console.error('Erreur lors de la suppression du produit:', error);
-        alert('Erreur lors de la suppression du produit');
-      }
+    try {
+      // Suppression optimiste
+      const deletePromise = deleteProduct(id).unwrap();
+      
+      // Mise à jour immédiate de l'UI
+      setSuccessMessage('Le produit a été supprimé avec succès !');
+      
+      // Attendre la confirmation du serveur
+      await deletePromise;
+    } catch (error) {
+      console.error('Erreur lors de la suppression du produit:', error);
+      setSuccessMessage('Erreur lors de la suppression du produit');
     }
   };
 

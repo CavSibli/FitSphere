@@ -6,7 +6,7 @@ import '../styles/ComingSoon.scss';
 const ComingSoon = () => {
   return (
     <section className="coming-soon">
-      <card className="coming-soon-content">
+      <article className="coming-soon-content">
         <div className="icon-container">
           <FaDumbbell className="icon" />
         </div>
@@ -16,7 +16,7 @@ const ComingSoon = () => {
         <Link to="/" className="back-button">
           <FaArrowLeft /> Retour à l'accueil
         </Link>
-      </card>
+      </article>
     </section>
   );
 };

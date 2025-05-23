@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRegisterMutation } from '../app/features/auth/authApiSlice';
+import { useRegisterMutation } from '../app/features/auth/authSlice';
 import '../styles/Login.scss';
 
 const Register = () => {
@@ -105,6 +105,7 @@ const Register = () => {
               placeholder="exemple@email.com"
               aria-required="true"
               aria-label="Votre adresse email"
+              autoComplete="email"
             />
           </div>
 
@@ -121,6 +122,7 @@ const Register = () => {
               placeholder="Minimum 6 caractères"
               aria-required="true"
               aria-label="Votre mot de passe"
+              autoComplete="current-password" 
             />
           </div>
 

@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { apiSlice } from '../api/apiSlice';
 
 const initialState = {
   user: null,
@@ -70,18 +70,7 @@ export const selectCurrentToken = (state) => state.auth.token;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectRedirectTo = (state) => state.auth.redirectTo;
 
-export const authApiSlice = createApi({
-  reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ 
-    baseUrl: 'http://localhost:5000/api',
-    prepareHeaders: (headers, { getState }) => {
-      const token = getState().auth.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({
@@ -102,6 +91,7 @@ export const authApiSlice = createApi({
       providesTags: ['Profile'],
     }),
   }),
+  overrideExisting: true,
 });
 
 export const {
