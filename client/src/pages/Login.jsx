@@ -41,7 +41,6 @@ const Login = () => {
 
     try {
       const response = await login(formData).unwrap();
-      console.log('Réponse du serveur:', response);
 
       // Stocker les informations dans Redux
       const userData = {
@@ -51,9 +50,7 @@ const Login = () => {
         role: response.role,
       };
 
-      console.log('Données utilisateur à stocker:', userData);
-      console.log('Token à stocker:', response.token);
-
+    
       // Mettre à jour le state Redux
       dispatch(setCredentials({ 
         user: userData,

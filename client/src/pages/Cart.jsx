@@ -301,7 +301,6 @@ const Cart = () => {
           <h2 id="cart-items-heading" className="visually-hidden">Liste des produits dans le panier</h2>
           {cartItems.map((item) => {
             if (!item?.product) {
-              console.log('Invalid item found:', item);
               return null;
             }
 
@@ -312,7 +311,6 @@ const Cart = () => {
                     src={item.product.image} 
                     alt={`${item.product.name} - ${item.product.price}€`}
                     onError={(e) => {
-                      console.log('Image loading error for product:', item.product);
                       e.target.src = 'placeholder-image-url';
                     }}
                   />

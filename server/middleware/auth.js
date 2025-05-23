@@ -3,42 +3,32 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
-    console.log('Headers reçus:', req.headers);
     
     // Vérifier si le token est présent dans les headers
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      console.log('Pas de header Authorization');
       return res.status(401).json({ message: 'Non autorisé - Token manquant' });
     }
 
     if (!authHeader.startsWith('Bearer ')) {
-      console.log('Format de token invalide');
       return res.status(401).json({ message: 'Non autorisé - Format de token invalide' });
     }
 
     // Extraire le token
     const token = authHeader.split(' ')[1];
-    console.log('Token extrait:', token);
 
     // Vérifier le token avec une valeur par défaut pour JWT_SECRET
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Token décodé:', decoded);
 
     // Vérifier si l'utilisateur existe
     const user = await User.findById(decoded.id);
     if (!user) {
-      console.log('Utilisateur non trouvé pour ID:', decoded.id);
       return res.status(401).json({ message: 'Non autorisé - Utilisateur non trouvé' });
     }
 
     // Ajouter l'utilisateur à la requête
     req.user = user;
-    console.log('Utilisateur authentifié:', { 
-      id: user._id, 
-      email: user.email,
-      role: user.role 
-    });
+    
     
     next();
   } catch (error) {

@@ -53,12 +53,6 @@ const Register = () => {
 
       // Sauvegarder le token et les informations utilisateur
       localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify({
-        id: response._id,
-        username: response.username,
-        email: response.email,
-        role: response.role
-      }));
 
       // Rediriger vers le dashboard approprié en fonction du rôle
       if (response.role === 'admin') {

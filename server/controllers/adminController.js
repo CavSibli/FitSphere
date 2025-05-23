@@ -14,26 +14,18 @@ exports.getStats = async (req, res) => {
 
     // Compter le nombre total d'utilisateurs
     const totalUsers = await User.countDocuments();
-    console.log('Total users:', totalUsers);
 
     // Compter le nombre total de produits
     const totalProducts = await Product.countDocuments();
-    console.log('Total products:', totalProducts);
 
     // Compter le nombre total de commandes (utilisateurs + invités)
     const totalUserOrders = await Order.countDocuments();
-    console.log('Total user orders:', totalUserOrders);
 
     // Vérifier si la collection GuestOrder existe
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    const guestOrderCollectionExists = collections.some(col => col.name === 'guestorders');
-    console.log('GuestOrder collection exists:', guestOrderCollectionExists);
 
     const totalGuestOrders = await GuestOrder.countDocuments();
-    console.log('Total guest orders:', totalGuestOrders);
 
     const totalOrders = totalUserOrders + totalGuestOrders;
-    console.log('Total orders (user + guest):', totalOrders);
 
     // Récupérer les commandes récentes (utilisateurs + invités)
     const recentUserOrders = await Order.find()
@@ -41,13 +33,11 @@ exports.getStats = async (req, res) => {
       .limit(5)
       .populate('user', 'username email')
       .select('-__v');
-    console.log('Recent user orders count:', recentUserOrders.length);
 
     const recentGuestOrders = await GuestOrder.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .select('-__v');
-    console.log('Recent guest orders count:', recentGuestOrders.length);
 
     // Transformer les commandes invitées récentes pour correspondre au format des commandes utilisateurs
     const formattedRecentGuestOrders = recentGuestOrders.map(order => ({
@@ -87,7 +77,6 @@ exports.getStats = async (req, res) => {
       recentOrders
     };
 
-    console.log('Stats envoyées:', stats);
     res.json(stats);
   } catch (error) {
     console.error('Erreur lors de la récupération des statistiques:', error);

@@ -15,8 +15,6 @@ const orderController = {
   // Créer une nouvelle commande
   createOrder: async (req, res) => {
     try {
-      console.log('Données reçues:', req.body);
-      console.log('User ID:', req.user?._id);
 
       const orderData = {
         ...req.body,
@@ -28,15 +26,12 @@ const orderController = {
         }
       };
 
-      console.log('Données de commande préparées:', orderData);
 
       const order = new Order(orderData);
       await order.save();
 
-      console.log('Commande créée avec succès:', order._id);
       res.status(201).json({ success: true, _id: order._id });
     } catch (error) {
-      console.error('Erreur détaillée:', error);
       res.status(500).json({ 
         message: 'Erreur création commande',
         error: error.message 

@@ -19,7 +19,7 @@ const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.FRONTEND_URL 
-    : ['http://localhost:5173', 'http://localhost:5174'],
+    : 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
@@ -48,14 +48,14 @@ app.use((req, res) => {
 });
 
 // Connexion à MongoDB avec options améliorées
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fitsphere', {
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => {
   console.log('Connecté à MongoDB');
   // Démarrer le serveur seulement après la connexion à MongoDB
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT ;
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
     console.log(`URL: http://localhost:${PORT}`);

@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const sanitize = require('mongo-sanitize');
 
 // Récupérer tous les produits
 exports.getAllProducts = async (req, res) => {
@@ -27,6 +28,7 @@ exports.getProductById = async (req, res) => {
 exports.createProduct = async (req, res) => {
   try {
     const product = new Product(req.body);
+    
     const savedProduct = await product.save();
     res.status(201).json(savedProduct);
   } catch (error) {
@@ -55,16 +57,14 @@ exports.updateProduct = async (req, res) => {
 exports.updateTrendyStatus = async (req, res) => {
   try {
     const { trendy } = req.body;
-    console.log('Mise à jour du statut trendy:', {
-      productId: req.params.id,
-      newTrendyStatus: trendy,
-      body: req.body
-    });
 
+    if (typeof trendy !== 'boolean') {
+      return res.status(400).json({ message: 'Le statut trendy doit être un booléen' });
+    }
+    
     // Trouver d'abord le produit
     const product = await Product.findById(req.params.id);
     if (!product) {
-      console.log('Produit non trouvé:', req.params.id);
       return res.status(404).json({ message: 'Produit non trouvé' });
     }
 
@@ -72,10 +72,8 @@ exports.updateTrendyStatus = async (req, res) => {
     product.trendy = trendy;
     await product.save();
 
-    console.log('Produit mis à jour avec succès:', product);
     res.status(200).json(product);
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du statut trendy:', error);
     res.status(400).json({ message: 'Erreur lors de la mise à jour du statut trendy', error: error.message });
   }
 };
