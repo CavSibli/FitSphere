@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const sanitize = require('mongo-sanitize');
 
 const orderController = {
   // Récupérer les commandes d'un utilisateur
@@ -15,17 +16,18 @@ const orderController = {
   // Créer une nouvelle commande
   createOrder: async (req, res) => {
     try {
+      const sanitizedBody = sanitize(req.body);
+      const sanitizedUserId = sanitize(req.user?._id);
 
       const orderData = {
-        ...req.body,
-        user: req.user?._id || 'guest',
+        ...sanitizedBody,
+        user: sanitizedUserId || 'guest',
         status: 'pending',
         payment: {
-          ...req.body.payment,
+          ...sanitizedBody.payment,
           status: 'pending'
         }
       };
-
 
       const order = new Order(orderData);
       await order.save();
@@ -42,9 +44,12 @@ const orderController = {
   // Mettre à jour le statut d'une commande
   updateOrderStatus: async (req, res) => {
     try {
+      const sanitizedId = sanitize(req.params.orderId);
+      const sanitizedBody = sanitize(req.body);
+
       const order = await Order.findByIdAndUpdate(
-        req.params.orderId,
-        { status: req.body.status },
+        sanitizedId,
+        { status: sanitizedBody.status },
         { new: true }
       );
       res.json(order);
@@ -56,11 +61,14 @@ const orderController = {
   // Mettre à jour le statut du paiement
   updatePaymentStatus: async (req, res) => {
     try {
+      const sanitizedId = sanitize(req.params.orderId);
+      const sanitizedBody = sanitize(req.body);
+
       const order = await Order.findByIdAndUpdate(
-        req.params.orderId,
+        sanitizedId,
         { 
-          'payment.status': req.body.paymentStatus,
-          'payment.transactionId': req.body.transactionId,
+          'payment.status': sanitizedBody.paymentStatus,
+          'payment.transactionId': sanitizedBody.transactionId,
           'payment.paymentDate': new Date()
         },
         { new: true }

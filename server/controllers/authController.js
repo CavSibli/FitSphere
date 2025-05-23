@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const sanitize = require('mongo-sanitize');
 
 // Générer un token JWT
 const generateToken = (id) => {
@@ -18,12 +19,19 @@ const generateToken = (id) => {
 // Enregistrer un nouvel utilisateur
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const sanitizedBody = sanitize(req.body);
+    const { username, email, password, role } = sanitizedBody;
 
-    // Vérifier si l'utilisateur existe déjà
-    const userExists = await User.findOne({ email });
-    if (userExists) {
+    // Vérifier si l'utilisateur existe déjà par email
+    const userExistsByEmail = await User.findOne({ email });
+    if (userExistsByEmail) {
       return res.status(400).json({ message: 'Un utilisateur avec cet email existe déjà' });
+    }
+
+    // Vérifier si le nom d'utilisateur existe déjà
+    const userExistsByUsername = await User.findOne({ username });
+    if (userExistsByUsername) {
+      return res.status(400).json({ message: 'Ce nom d\'utilisateur est déjà pris' });
     }
 
     // Créer le nouvel utilisateur
@@ -48,6 +56,17 @@ exports.register = async (req, res) => {
     res.status(201).json(response);
   } catch (error) {
     console.error('Erreur lors de l\'enregistrement:', error);
+    
+    // Gestion spécifique des erreurs MongoDB
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      if (field === 'username') {
+        return res.status(400).json({ message: 'Ce nom d\'utilisateur est déjà pris' });
+      } else if (field === 'email') {
+        return res.status(400).json({ message: 'Un utilisateur avec cet email existe déjà' });
+      }
+    }
+    
     res.status(500).json({ message: 'Erreur lors de l\'enregistrement' });
   }
 };
@@ -55,8 +74,8 @@ exports.register = async (req, res) => {
 // Connecter un utilisateur
 exports.login = async (req, res) => {
   try {
-    
-    const { email, password } = req.body;
+    const sanitizedBody = sanitize(req.body);
+    const { email, password } = sanitizedBody;
 
     // Validation des champs requis
     if (!email || !password) {
@@ -69,7 +88,6 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
-
 
     // Vérifier le mot de passe
     const isMatch = await bcrypt.compare(password, user.password);

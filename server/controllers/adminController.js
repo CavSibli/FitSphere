@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Order = require('../models/Order');
 const GuestOrder = require('../models/GuestOrder');
 const mongoose = require('mongoose');
+const sanitize = require('mongo-sanitize');
 
 // Obtenir les statistiques générales
 exports.getStats = async (req, res) => {
@@ -172,16 +173,17 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(403).json({ message: 'Accès non autorisé' });
     }
 
-    const { status } = req.body;
-    const orderId = req.params.orderId;
+    const sanitizedBody = sanitize(req.body);
+    const sanitizedOrderId = sanitize(req.params.orderId);
+    const { status } = sanitizedBody;
 
     // Essayer de trouver la commande dans Order
-    let order = await Order.findById(orderId);
+    let order = await Order.findById(sanitizedOrderId);
     let isGuestOrder = false;
 
     // Si pas trouvée dans Order, chercher dans GuestOrder
     if (!order) {
-      order = await GuestOrder.findById(orderId);
+      order = await GuestOrder.findById(sanitizedOrderId);
       isGuestOrder = true;
     }
 
@@ -212,7 +214,9 @@ exports.deleteUser = async (req, res) => {
       return res.status(403).json({ message: 'Accès non autorisé' });
     }
 
-    const user = await User.findById(req.params.userId);
+    const sanitizedUserId = sanitize(req.params.userId);
+    const user = await User.findById(sanitizedUserId);
+    
     if (!user) {
       return res.status(404).json({ message: 'Utilisateur non trouvé' });
     }
@@ -223,7 +227,7 @@ exports.deleteUser = async (req, res) => {
     }
 
     // Utiliser findByIdAndDelete au lieu de remove()
-    await User.findByIdAndDelete(req.params.userId);
+    await User.findByIdAndDelete(sanitizedUserId);
     res.json({ message: 'Utilisateur supprimé avec succès' });
   } catch (error) {
     console.error('Erreur lors de la suppression de l\'utilisateur:', error);
