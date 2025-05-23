@@ -19,7 +19,7 @@ const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.FRONTEND_URL 
-    : 'http://localhost:5173',
+    : 'https://fit-sphere-kurp-ghoqrj7i5-siblis-projects.vercel.app',
   credentials: true
 }));
 app.use(express.json());
