@@ -6,7 +6,7 @@ const sanitize = require('mongo-sanitize');
 // Générer un token JWT
 const generateToken = (id) => {
   try {
-    const token = jwt.sign({ id }, process.env.JWT_SECRET || 'votre_secret_jwt', {
+    const token = jwt.sign({ id }, process.env.JWT_SECRET, {
       expiresIn: '30d',
     });
     return token;

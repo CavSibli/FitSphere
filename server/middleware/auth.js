@@ -3,6 +3,11 @@ const User = require('../models/User');
 
 const auth = async (req, res, next) => {
   try {
+
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET non défini');
+      return res.status(500).json({ message: 'Erreur de configuration du serveur' });
+    }
     
     // Vérifier si le token est présent dans les headers
     const authHeader = req.headers.authorization;
