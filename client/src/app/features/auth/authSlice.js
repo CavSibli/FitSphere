@@ -70,7 +70,7 @@ export const selectCurrentToken = (state) => state.auth.token;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectRedirectTo = (state) => state.auth.redirectTo;
 
-export const authApiSlice = apiSlice.injectEndpoints({
+  export const authApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation({
       query: (credentials) => ({

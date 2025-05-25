@@ -13,34 +13,32 @@ exports.getStats = async (req, res) => {
       return res.status(403).json({ message: 'Accès non autorisé' });
     }
 
-    // Compter le nombre total d'utilisateurs
-    const totalUsers = await User.countDocuments();
-
-    // Compter le nombre total de produits
-    const totalProducts = await Product.countDocuments();
-
-    // Compter le nombre total de commandes (utilisateurs + invités)
-    const totalUserOrders = await Order.countDocuments();
-
-    // Vérifier si la collection GuestOrder existe
-
-    const totalGuestOrders = await GuestOrder.countDocuments();
+    // Utiliser Promise.all pour exécuter les requêtes en parallèle de manière plus efficace
+    const [totalUsers, totalProducts, totalUserOrders, totalGuestOrders] = await Promise.all([
+      User.countDocuments().exec(),
+      Product.countDocuments().exec(),
+      Order.countDocuments().exec(),
+      GuestOrder.countDocuments().exec()
+    ]);
 
     const totalOrders = totalUserOrders + totalGuestOrders;
 
-    // Récupérer les commandes récentes (utilisateurs + invités)
-    const recentUserOrders = await Order.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('user', 'username email')
-      .select('-__v');
+    // Récupérer les commandes récentes en parallèle
+    const [recentUserOrders, recentGuestOrders] = await Promise.all([
+      Order.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('user', 'username email')
+        .select('-__v')
+        .exec(),
+      GuestOrder.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('-__v')
+        .exec()
+    ]);
 
-    const recentGuestOrders = await GuestOrder.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('-__v');
-
-    // Transformer les commandes invitées récentes pour correspondre au format des commandes utilisateurs
+    // Transformer les commandes invitées récentes
     const formattedRecentGuestOrders = recentGuestOrders.map(order => ({
       _id: order._id,
       orderNumber: order.orderNumber,
@@ -53,13 +51,13 @@ exports.getStats = async (req, res) => {
       createdAt: order.createdAt
     }));
 
-    // Transformer les commandes utilisateurs pour un format uniforme
+    // Transformer les commandes utilisateurs
     const formattedRecentUserOrders = recentUserOrders.map(order => ({
       _id: order._id,
       orderNumber: order.orderNumber,
       user: {
-        username: order.user.username,
-        email: order.user.email
+        username: order.user?.username || 'Utilisateur supprimé',
+        email: order.user?.email || 'Email non disponible'
       },
       total: order.totalAmount,
       status: order.status,
@@ -81,7 +79,10 @@ exports.getStats = async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Erreur lors de la récupération des statistiques:', error);
-    res.status(500).json({ message: 'Erreur lors de la récupération des statistiques' });
+    res.status(500).json({ 
+      message: 'Erreur lors de la récupération des statistiques',
+      error: error.message 
+    });
   }
 };
 

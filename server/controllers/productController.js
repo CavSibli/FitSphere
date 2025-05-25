@@ -65,11 +65,11 @@ exports.updateTrendyStatus = async (req, res) => {
     const sanitizedId = sanitize(req.params.id);
     const sanitizedBody = sanitize(req.body);
     const { trendy } = sanitizedBody;
-
+    
     if (typeof trendy !== 'boolean') {
       return res.status(400).json({ message: 'Le statut trendy doit être un booléen' });
     }
-    
+
     // Trouver d'abord le produit
     const product = await Product.findById(sanitizedId);
     if (!product) {
