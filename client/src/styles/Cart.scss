@@ -90,7 +90,7 @@
         align-items: center;
         gap: $spacing-sm;
         margin-bottom: $spacing-sm;
-
+      
         button {
           @include button-base;
           background-color: $primary-color;
@@ -99,12 +99,17 @@
           width: 30px;
           height: 30px;
           font-size: 1rem;
-
+          // Ajout des propriétés pour centrer le contenu
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0; // Suppression du padding par défaut
+      
           &:hover {
             background-color: color.adjust($primary-color, $lightness: -10%);
           }
         }
-
+      
         span {
           font-size: $font-size-md;
           min-width: 20px;

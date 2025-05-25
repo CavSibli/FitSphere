@@ -68,7 +68,7 @@ const Home = () => {
           className="notification"
         >
           <p>
-            <strong>{notification.productName}</strong> : {notification.message}
+            <strong>{notification.productName}</strong>  {notification.message}
           </p>
         </div>
       )}

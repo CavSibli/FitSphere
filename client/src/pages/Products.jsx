@@ -42,7 +42,7 @@ const Products = () => {
 
     // Faire disparaître la notification après 3 secondes
     setTimeout(() => {
-      setNotification({ show: false, message: '', productName: '' });
+      setNotification({ show: false, message: '', productName: 'qdsze' });
     }, 3000);
   };
 
@@ -71,7 +71,7 @@ const Products = () => {
           className="notification"
         >
           <p>
-            <strong>{notification.productName}</strong> : {notification.message}
+            <strong>{notification.productName}</strong> {notification.message}
           </p>
         </div>
       )}
